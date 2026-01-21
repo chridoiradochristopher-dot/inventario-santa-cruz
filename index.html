@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Pro - Santa Cruz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #005cbf; --bg: #f4f7f6; --text: #333; --accent: #ff9800; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+        
+        header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        h1 { margin: 0; font-size: 1.5rem; }
+
+        .admin-toggle { 
+            cursor: pointer; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 0.9em; border: 1px solid transparent; transition: all 0.3s;
+        }
+        .admin-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        .inventory-section { flex: 6; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; background: #f9f9f9; }
+        .history-section { flex: 4; background: #fff; display: flex; flex-direction: column; border-left: 1px solid #eee; min-width: 380px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); }
+        
+        .history-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; }
+        
+        .btn-excel { background: #217346; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; width: 100%; font-weight: bold; display: flex; justify-content: center; gap: 8px; margin-top: 5px;}
+        .btn-excel:hover { background: #1e6b41; }
+        .btn-blue { background: #005cbf; } .btn-blue:hover { background: #004494; }
+
+        .history-list { flex: 1; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
+        .history-item { padding: 12px 20px; border-bottom: 1px solid #eee; position: relative; }
+        .is-mision { border-left: 5px solid var(--accent); background: #fffbf0; } 
+        .tag-mision { background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 5px; }
+        
+        .h-row { display: flex; justify-content: space-between; align-items: start; }
+        .h-model { font-weight: bold; color: #333; font-size: 0.95em; }
+        .h-meta { font-size: 0.85em; color: #777; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+        .h-time { color: var(--primary); font-weight: 600; }
+        .btn-del-hist { color: #dc3545; background: none; border: 1px solid #f8d7da; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        
+        .panel-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .panel-title { font-weight: bold; margin-bottom: 10px; display: block; color: #555; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        input[type="text"], input[type="number"], input[type="file"], select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1; }
+        
+        .check-container { display: flex; align-items: center; gap: 8px; font-size: 0.9em; cursor: pointer; background: #fff3e0; padding: 8px 12px; border-radius: 4px; border: 1px solid #ffe0b2; color: #e65100; font-weight: bold; }
+        .check-container input { width: 18px; height: 18px; cursor: pointer; }
+        
+        .btn-add { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; }
+        .btn-reg { background: #6f42c1; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 100px; object-fit: cover; }
+        .card-body { padding: 10px; }
+        .c-title { font-weight: bold; font-size: 0.9em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .c-stock { display: flex; justify-content: center; align-items: center; margin-top: 5px; height: 30px; }
+        body.is-admin .c-stock { justify-content: space-between; }
+        .stock-num { font-size: 1.2em; font-weight: bold; color: var(--primary); }
+        .btn-icon { width: 25px; height: 25px; border-radius: 50%; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+
+        .admin-only { display: none !important; }
+        body.is-admin .admin-only { display: block !important; }
+        body.is-admin .admin-only-flex { display: flex !important; }
+        
+        .history-secure-container { display: none; }
+        body.is-admin .history-secure-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📦 Taller Santa Cruz</h1>
+    <div class="admin-toggle" onclick="toggleAdminPanel()">
+        🔒 Administración
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="inventory-section">
+        <div id="admin-create-panel" class="panel-box admin-only" style="border: 2px solid #005cbf;">
+            <span class="panel-title">1. Gestión de Stock</span>
+            <div class="form-row">
+                <input type="text" id="name" placeholder="Nombre Modelo (Ej: A1)">
+                <input type="file" id="photo" accept="image/*">
+            </div>
+            <button class="btn-add" onclick="addItem()">+ Crear Modelo</button>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
+            <span class="panel-title" style="font-size: 0.8em; color: #217346;">Excel de Inventario (Faltantes)</span>
+            <div class="form-row">
+                <input type="number" id="stock-ideal" placeholder="Stock Ideal (Ej: 20)" value="20">
+                <button class="btn-excel btn-blue" onclick="descargarInventarioStock()">📥 Bajar Reporte Stock</button>
+            </div>
+        </div>
+        <div id="grid" class="grid">Cargando...</div>
+    </div>
+
+    <div class="history-section">
+        <div class="admin-only" style="padding: 15px; border-bottom: 2px dashed #ddd; background: #fcfcfc;">
+            <span class="panel-title" style="color:#6f42c1">2. Registro Manual</span>
+            <div class="form-row">
+                <input type="text" id="manual-name" placeholder="Detalle (Ej: Foto Boda)">
+                <select id="manual-size">
+                    <option value="">-- Tamaño --</option>
+                    <option value="16*22">16*22</option>
+                    <option value="20*27">20*27</option>
+                    <option value="30*42">30*42</option>
+                    <option value="50*40">50*40</option>
+                    <option value="50*60">50*60</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label class="check-container">
+                    <input type="checkbox" id="check-mision">
+                    <span>¿Misiones?</span>
+                </label>
+                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800;">
+                <button class="btn-reg" style="width: auto;" onclick="registrarManual()">Guardar</button>
+            </div>
+        </div>
+
+        <div class="history-secure-container">
+            <div class="history-header">
+                <span style="font-weight:bold; color:#555">📊 Historial de Trabajo</span>
+                <button id="btn-descargar" class="btn-excel" onclick="descargarHistorialCompleto()">
+                    📥 Descargar Historial Ventas
+                </button>
+            </div>
+            <ul id="history-list" class="history-list"></ul>
+        </div>
+        
+        <div id="secure-placeholder" style="padding: 40px; text-align: center; color: #bbb; margin-top: 20px;">
+            <span style="font-size: 3em;">🔒</span><br>
+            <h3>Modo Catálogo</h3>
+            <small>Acceso restringido solo a personal autorizado</small>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit, getDocs } 
+    from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAg30zZfrssGZN7LdhN0XAvShG-5J-LdSI",
+      authDomain: "inventario-441b2.firebaseapp.com",
+      projectId: "inventario-441b2",
+      storageBucket: "inventario-441b2.firebasestorage.app",
+      messagingSenderId: "52459952582",
+      appId: "1:52459952582:web:77a0329f956d5e96fdfac7",
+      measurementId: "G-J9S40TYDT7"
+    };
+
+    const ADMIN_PASSWORD = "1234"; 
+    
+    // DEFINIMOS LOS TAMAÑOS Y PRECIOS
+    // El 'w' y 'h' son ancho y alto en CM para la lógica de aproximación
+    const ESTANDARES = [
+        { nombre: "16*22", w: 16, h: 22, precio: 150 },
+        { nombre: "20*27", w: 20, h: 27, precio: 190 },
+        { nombre: "30*42", w: 30, h: 42, precio: 310 },
+        { nombre: "50*40", w: 50, h: 40, precio: 470 },
+        { nombre: "50*60", w: 50, h: 60, precio: 680 }
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('check-mision').addEventListener('change', function() {
+        document.getElementById('manual-fallecido').style.display = this.checked ? 'block' : 'none';
+    });
+
+    window.toggleAdminPanel = function() {
+        const body = document.body;
+        const placeholder = document.getElementById('secure-placeholder');
+        if (body.classList.contains('is-admin')) {
+            body.classList.remove('is-admin');
+            placeholder.style.display = 'block'; 
+        } else {
+            if (pedirClave()) {
+                body.classList.add('is-admin');
+                placeholder.style.display = 'none'; 
+            }
+        }
+    }
+
+    window.addItem = addItem;
+    window.registrarManual = registrarManual;
+    window.cambiarCant = cambiarCant;
+    window.borrarItem = borrarItem;
+    window.fijarCant = fijarCant;
+    window.borrarHistorial = borrarHistorial;
+    window.descargarHistorialCompleto = descargarHistorialCompleto;
+    window.descargarInventarioStock = descargarInventarioStock;
+
+    const qProd = query(collection(db, "productos"), orderBy("name", "asc"));
+    onSnapshot(qProd, (snapshot) => {
+        const grid = document.getElementById('grid'); grid.innerHTML = "";
+        snapshot.docs.forEach(d => {
+            const data = d.data(); const id = d.id;
+            const img = data.image || 'https://via.placeholder.com/150';
+            const card = document.createElement('div'); card.className = 'card';
+            card.innerHTML = `
+                <img src="${img}">
+                <div class="card-body">
+                    <span class="c-title" title="${data.name}">${data.name}</span>
+                    <div class="c-stock">
+                        <button class="btn-icon admin-only" onclick="cambiarCant('${id}', ${data.quantity}, -1)">-</button>
+                        <span class="stock-num">${data.quantity}</span>
+                        <button class="btn-icon admin-only" onclick="cambiarCant('${id}', ${data.quantity}, 1)">+</button>
+                    </div>
+                    <div class="admin-controls admin-only-flex" style="margin-top:5px; justify-content:space-between; display:none;">
+                         <button style="border:none; background:none; cursor:pointer; font-size:0.8em; color:#007bff" onclick="fijarCant('${id}')">Editar</button>
+                         <button style="border:none; background:none; cursor:pointer; font-size:0.8em; color:red" onclick="borrarItem('${id}')">Borrar</button>
+                    </div>
+                </div>`;
+            grid.appendChild(card);
+        });
+    });
+
+    const qHist = query(collection(db, "historial"), orderBy("fecha", "desc"), limit(30));
+    onSnapshot(qHist, (snapshot) => {
+        const list = document.getElementById('history-list'); list.innerHTML = "";
+        snapshot.docs.forEach(d => {
+            const data = d.data(); const id = d.id;
+            let fechaStr = "---";
+            if(data.fecha) {
+                const dateObj = data.fecha.toDate();
+                fechaStr = dateObj.toLocaleDateString('es-BO') + " " + dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
+            }
+            const esMision = data.es_mision === true;
+            const claseCss = esMision ? 'history-item is-mision' : 'history-item';
+            const etiqueta = esMision ? '<span class="tag-mision">MISIÓN</span>' : '';
+            const fallecidoInfo = (esMision && data.nombre_fallecido) ? `<br><small style="color:#e65100">Fallecido: ${data.nombre_fallecido}</small>` : '';
+
+            const li = document.createElement('li'); li.className = claseCss;
+            li.innerHTML = `
+                <div class="h-row">
+                    <span class="h-model">${data.nombre_marco || 'Trabajo'} ${etiqueta}</span>
+                    <button class="btn-del-hist" onclick="borrarHistorial('${id}')">✕</button>
+                </div>
+                <div class="h-meta">
+                    <span class="h-time">${fechaStr}</span>
+                    <span>Medida: ${data.medida_detectada || '-'}</span>
+                    ${fallecidoInfo}
+                </div>`;
+            list.appendChild(li);
+        });
+    });
+
+    async function registrarManual() {
+        const nombre = document.getElementById('manual-name').value;
+        const medida = document.getElementById('manual-size').value;
+        const checkMision = document.getElementById('check-mision').checked;
+        const fallecido = document.getElementById('manual-fallecido').value;
+        if(!nombre || !medida) { alert("Complete nombre y medida."); return; }
+        await addDoc(collection(db, "historial"), {
+            nombre_marco: nombre, medida_detectada: medida, es_mision: checkMision, 
+            nombre_fallecido: checkMision ? fallecido : "", 
+            fecha: new Date(), archivo_original: "Registro Manual"
+        });
+        document.getElementById('manual-name').value = ""; document.getElementById('manual-size').value = "";
+        document.getElementById('manual-fallecido').value = ""; document.getElementById('check-mision').checked = false;
+        document.getElementById('manual-fallecido').style.display = 'none';
+    }
+
+    async function descargarInventarioStock() {
+        const stockIdeal = parseInt(document.getElementById('stock-ideal').value) || 20;
+        const qAll = query(collection(db, "productos"), orderBy("name", "asc"));
+        const snapshot = await getDocs(qAll);
+        if(snapshot.empty) { alert("No hay productos"); return; }
+        const filas = [];
+        snapshot.docs.forEach(d => {
+            const data = d.data();
+            const cantidad = data.quantity || 0;
+            const falta = stockIdeal - cantidad; 
+            const faltaTexto = falta > 0 ? falta : "✓ Completo";
+            filas.push({ "Modelo": data.name, "Stock Actual": cantidad, "Stock Ideal": stockIdeal, "Faltante para Completar": faltaTexto });
+        });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Inventario Stock");
+        XLSX.writeFile(wb, `Stock_Faltantes_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // --- SÚPER FUNCIÓN DE APROXIMACIÓN (LÓGICA MEJORADA) ---
+    function obtenerEstandar(texto) {
+        if (!texto) return { nombre: "DESCONOCIDO", precio: 0 };
+        
+        // 1. Extraer todos los números del texto (ej: "302 x 415")
+        let numeros = texto.match(/(\d+[.,]?\d*)/g);
+        
+        // Si no hay 2 números, no podemos calcular, devolvemos tal cual
+        if (!numeros || numeros.length < 2) return { nombre: texto, precio: 0 };
+
+        // Convertir a float
+        let v1 = parseFloat(numeros[0].replace(',', '.'));
+        let v2 = parseFloat(numeros[1].replace(',', '.'));
+
+        // 2. DETECTOR DE MILÍMETROS: Si algún valor es > 100, asumimos milímetros y pasamos a CM
+        if (v1 > 100) v1 = v1 / 10;
+        if (v2 > 100) v2 = v2 / 10;
+
+        // 3. COMPARAR CON ESTÁNDARES
+        let mejorMatch = null;
+        let menorError = 9999; 
+        // Tolerancia de error (ej: 4cm de diferencia acumulada total)
+        const TOLERANCIA = 4.0; 
+
+        for (let std of ESTANDARES) {
+            // Caso 1: Orientación normal (v1 es ancho, v2 es alto)
+            let error1 = Math.abs(v1 - std.w) + Math.abs(v2 - std.h);
+            
+            // Caso 2: Orientación rotada (v1 es alto, v2 es ancho)
+            let error2 = Math.abs(v1 - std.h) + Math.abs(v2 - std.w);
+            
+            let errorActual = Math.min(error1, error2);
+
+            if (errorActual < TOLERANCIA && errorActual < menorError) {
+                menorError = errorActual;
+                mejorMatch = std;
+            }
+        }
+
+        if (mejorMatch) {
+            return mejorMatch; // Devolvemos el objeto con nombre limpio y precio
+        }
+
+        // Si falló todo, devolvemos el original sucio
+        return { nombre: texto, precio: 0 };
+    }
+
+    async function descargarHistorialCompleto() {
+        const btn = document.getElementById('btn-descargar'); btn.disabled = true; btn.innerText = "⏳ Generando...";
+        try {
+            const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
+            const querySnapshot = await getDocs(qFull);
+            if (querySnapshot.empty) { alert("Sin datos."); btn.disabled = false; return; }
+
+            const filasGeneral = []; const filasMisiones = [];
+            // Regex para buscar medidas explícitas en el nombre (Ej: "A1 30*42")
+            const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
+
+            querySnapshot.docs.forEach(doc => {
+                const d = doc.data();
+                let fecha = "", hora = "";
+                if (d.fecha) {
+                    const objDate = d.fecha.toDate();
+                    fecha = objDate.toLocaleDateString('es-BO'); hora = objDate.toLocaleTimeString('es-BO');
+                }
+
+                let nombreLimpio = d.nombre_marco || "";
+                let medidaRaw = d.medida_detectada || "";
+                let estandarEncontrado = null;
+
+                // PASO 1: ¿El nombre tiene la medida escrita? (Prioridad Alta)
+                const matchNombre = nombreLimpio.match(regexExplicit);
+                if (matchNombre) {
+                    // Construimos un string tipo "30*42" y forzamos la búsqueda en estándares
+                    let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
+                    estandarEncontrado = obtenerEstandar(medidaTexto);
+                    // Limpiamos el nombre
+                    nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
+                } 
+                // PASO 2: Si no, usamos la medida detectada por la máquina con la súper aproximación
+                else {
+                    estandarEncontrado = obtenerEstandar(medidaRaw);
+                }
+
+                const filaBase = { 
+                    "Fecha": fecha, 
+                    "Hora": hora, 
+                    "Trabajo (Modelo)": nombreLimpio, 
+                    "Medida": estandarEncontrado.nombre, // Usamos siempre la medida limpia estandarizada 
+                    "Origen": d.archivo_original || "Manual" 
+                };
+
+                if (d.es_mision === true) {
+                    const filaMision = { ...filaBase, "Nombre Fallecido": d.nombre_fallecido || "", "Precio (Bs)": estandarEncontrado.precio };
+                    filasMisiones.push(filaMision);
+                } else {
+                    filasGeneral.push(filaBase);
+                }
+            });
+
+            const wb = XLSX.utils.book_new();
+            if (filasGeneral.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasGeneral), "Historial General");
+            else XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Vacío"}]), "Historial General");
+
+            if (filasMisiones.length > 0) {
+                const wsMis = XLSX.utils.json_to_sheet(filasMisiones);
+                const totalDinero = filasMisiones.reduce((sum, item) => sum + (item["Precio (Bs)"] || 0), 0);
+                XLSX.utils.sheet_add_aoa(wsMis, [["", "", "", "", "TOTAL ACUMULADO:", totalDinero]], {origin: -1});
+                XLSX.utils.book_append_sheet(wb, wsMis, "Reporte Misiones");
+            } else { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Sin Misiones"}]), "Reporte Misiones"); }
+
+            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } catch (error) { console.error(error); alert("Error excel: " + error.message); } 
+        finally { btn.disabled = false; btn.innerText = "📥 Descargar Historial Ventas"; }
+    }
+
+    function pedirClave() { return prompt("Clave Admin:") === ADMIN_PASSWORD; }
+    
+    async function addItem() {
+        const name = document.getElementById('name').value; if(!name) return;
+        const file = document.getElementById('photo').files[0]; let base64 = null;
+        if(file) base64 = await resizeImage(file);
+        await addDoc(collection(db, "productos"), { name: name, quantity: 0, image: base64, date: Date.now() });
+        document.getElementById('name').value = ""; document.getElementById('photo').value = "";
+    }
+    async function cambiarCant(id, c, ch) { await updateDoc(doc(db, "productos", id), { quantity: c + ch }); }
+    async function fijarCant(id) { if(confirm("¿Editar Stock?")) { const v = prompt("Total:"); if(v) await updateDoc(doc(db, "productos", id), { quantity: parseInt(v) }); } }
+    async function borrarItem(id) { if(confirm("¿Borrar permanentemente?")) await deleteDoc(doc(db, "productos", id)); }
+    async function borrarHistorial(id) { if(confirm("¿Borrar del historial?")) await deleteDoc(doc(db, "historial", id)); }
+    function resizeImage(file) { return new Promise(r => { const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const c = document.createElement('canvas'); c.width = 200; c.height = (200/img.width)*img.height; c.getContext('2d').drawImage(img,0,0,c.width,c.height); r(c.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; reader.readAsDataURL(file); }); }
+</script>
+</body>
+</html>
