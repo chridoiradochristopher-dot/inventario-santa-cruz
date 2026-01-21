@@ -1,0 +1,1 @@
+# inventario-santa-cruz
