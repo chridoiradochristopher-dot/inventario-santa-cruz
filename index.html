@@ -100,9 +100,16 @@
     <div class="history-section">
         <div class="admin-only" style="padding: 15px; border-bottom: 2px dashed #ddd; background: #fcfcfc;">
             <span class="panel-title" style="color:#6f42c1">2. Registro Manual</span>
+            
             <div class="form-row">
-                <input type="text" id="manual-name" placeholder="Detalle (Ej: Foto Boda)">
-                <select id="manual-size">
+                <select id="manual-model" style="flex: 2; border-color: #005cbf; background: #f0f7ff; font-weight:bold;">
+                    <option value="">-- Seleccionar Marco --</option>
+                    </select>
+                <input type="text" id="manual-name" placeholder="Detalle (Ej: Foto Boda)" style="flex: 2;">
+            </div>
+
+            <div class="form-row">
+                 <select id="manual-size" style="flex: 2;">
                     <option value="">-- Tamaño --</option>
                     <option value="16*22">16*22</option>
                     <option value="20*27">20*27</option>
@@ -111,15 +118,16 @@
                     <option value="50*60">50*60</option>
                     <option value="OTRO">Otro</option>
                 </select>
-            </div>
-            <div class="form-row">
-                <label class="check-container">
+                <label class="check-container" style="flex: 1;">
                     <input type="checkbox" id="check-mision">
-                    <span>¿Misiones?</span>
+                    <span>Misión</span>
                 </label>
-                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800;">
-                <button class="btn-reg" style="width: auto;" onclick="registrarManual()">Guardar</button>
             </div>
+            
+            <div class="form-row">
+                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800; width: 100%;">
+            </div>
+            <button class="btn-reg" style="width: 100%;" onclick="registrarManual()">💾 Guardar y Descontar</button>
         </div>
 
         <div class="history-secure-container">
@@ -142,7 +150,8 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit, getDocs } 
+    // IMPORTANTE: Agregamos 'increment' para la resta automática
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit, getDocs, increment } 
     from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -157,8 +166,6 @@
 
     const ADMIN_PASSWORD = "1234"; 
     
-    // DEFINIMOS LOS TAMAÑOS Y PRECIOS
-    // El 'w' y 'h' son ancho y alto en CM para la lógica de aproximación
     const ESTANDARES = [
         { nombre: "16*22", w: 16, h: 22, precio: 150 },
         { nombre: "20*27", w: 20, h: 27, precio: 190 },
@@ -197,11 +204,21 @@
     window.descargarHistorialCompleto = descargarHistorialCompleto;
     window.descargarInventarioStock = descargarInventarioStock;
 
+    // --- CARGAR PRODUCTOS Y LLENAR EL SELECTOR MANUAL ---
     const qProd = query(collection(db, "productos"), orderBy("name", "asc"));
     onSnapshot(qProd, (snapshot) => {
-        const grid = document.getElementById('grid'); grid.innerHTML = "";
+        const grid = document.getElementById('grid'); 
+        const selectModel = document.getElementById('manual-model'); // El nuevo selector
+        
+        grid.innerHTML = "";
+        
+        // Guardamos la opción por defecto del select
+        selectModel.innerHTML = '<option value="">-- Seleccionar Marco --</option>';
+
         snapshot.docs.forEach(d => {
             const data = d.data(); const id = d.id;
+            
+            // 1. Llenar Grid (Igual que siempre)
             const img = data.image || 'https://via.placeholder.com/150';
             const card = document.createElement('div'); card.className = 'card';
             card.innerHTML = `
@@ -219,6 +236,12 @@
                     </div>
                 </div>`;
             grid.appendChild(card);
+
+            // 2. Llenar el Selector del Registro Manual
+            const option = document.createElement('option');
+            option.value = id; // El valor es el ID para poder restar stock
+            option.text = data.name; // El texto es el nombre del modelo
+            selectModel.appendChild(option);
         });
     });
 
@@ -252,20 +275,54 @@
         });
     });
 
+    // --- NUEVO REGISTRO MANUAL CON RESTA DE STOCK ---
     async function registrarManual() {
-        const nombre = document.getElementById('manual-name').value;
+        const selectModel = document.getElementById('manual-model');
+        const modelId = selectModel.value; // ID del producto
+        const modelName = selectModel.options[selectModel.selectedIndex].text; // Nombre (ej: A1)
+
+        const detalle = document.getElementById('manual-name').value; // Ej: Foto Boda
         const medida = document.getElementById('manual-size').value;
         const checkMision = document.getElementById('check-mision').checked;
         const fallecido = document.getElementById('manual-fallecido').value;
-        if(!nombre || !medida) { alert("Complete nombre y medida."); return; }
-        await addDoc(collection(db, "historial"), {
-            nombre_marco: nombre, medida_detectada: medida, es_mision: checkMision, 
-            nombre_fallecido: checkMision ? fallecido : "", 
-            fecha: new Date(), archivo_original: "Registro Manual"
-        });
-        document.getElementById('manual-name').value = ""; document.getElementById('manual-size').value = "";
-        document.getElementById('manual-fallecido').value = ""; document.getElementById('check-mision').checked = false;
-        document.getElementById('manual-fallecido').style.display = 'none';
+
+        // Validaciones
+        if(!modelId) { alert("¡Debes seleccionar un Marco del inventario!"); return; }
+        if(!medida) { alert("Selecciona el tamaño."); return; }
+
+        // Creamos un nombre compuesto para el historial: "Modelo - Detalle"
+        // Esto permite que el Excel siga funcionando para detectar el modelo
+        const nombreCompuesto = detalle ? `${modelName} - ${detalle}` : modelName;
+
+        try {
+            // 1. Guardar en Historial
+            await addDoc(collection(db, "historial"), {
+                nombre_marco: nombreCompuesto, 
+                medida_detectada: medida, 
+                es_mision: checkMision, 
+                nombre_fallecido: checkMision ? fallecido : "", 
+                fecha: new Date(), 
+                archivo_original: "Registro Manual"
+            });
+
+            // 2. RESTAR DEL STOCK AUTOMÁTICAMENTE
+            const productRef = doc(db, "productos", modelId);
+            await updateDoc(productRef, {
+                quantity: increment(-1)
+            });
+
+            // Limpiar formulario
+            selectModel.value = "";
+            document.getElementById('manual-name').value = ""; 
+            document.getElementById('manual-size').value = "";
+            document.getElementById('manual-fallecido').value = ""; 
+            document.getElementById('check-mision').checked = false;
+            document.getElementById('manual-fallecido').style.display = 'none';
+
+        } catch (e) {
+            console.error(e);
+            alert("Error al registrar: " + e.message);
+        }
     }
 
     async function descargarInventarioStock() {
@@ -286,50 +343,27 @@
         XLSX.writeFile(wb, `Stock_Faltantes_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // --- SÚPER FUNCIÓN DE APROXIMACIÓN (LÓGICA MEJORADA) ---
     function obtenerEstandar(texto) {
         if (!texto) return { nombre: "DESCONOCIDO", precio: 0 };
-        
-        // 1. Extraer todos los números del texto (ej: "302 x 415")
         let numeros = texto.match(/(\d+[.,]?\d*)/g);
-        
-        // Si no hay 2 números, no podemos calcular, devolvemos tal cual
         if (!numeros || numeros.length < 2) return { nombre: texto, precio: 0 };
-
-        // Convertir a float
         let v1 = parseFloat(numeros[0].replace(',', '.'));
         let v2 = parseFloat(numeros[1].replace(',', '.'));
-
-        // 2. DETECTOR DE MILÍMETROS: Si algún valor es > 100, asumimos milímetros y pasamos a CM
         if (v1 > 100) v1 = v1 / 10;
         if (v2 > 100) v2 = v2 / 10;
-
-        // 3. COMPARAR CON ESTÁNDARES
         let mejorMatch = null;
         let menorError = 9999; 
-        // Tolerancia de error (ej: 4cm de diferencia acumulada total)
         const TOLERANCIA = 4.0; 
-
         for (let std of ESTANDARES) {
-            // Caso 1: Orientación normal (v1 es ancho, v2 es alto)
             let error1 = Math.abs(v1 - std.w) + Math.abs(v2 - std.h);
-            
-            // Caso 2: Orientación rotada (v1 es alto, v2 es ancho)
             let error2 = Math.abs(v1 - std.h) + Math.abs(v2 - std.w);
-            
             let errorActual = Math.min(error1, error2);
-
             if (errorActual < TOLERANCIA && errorActual < menorError) {
                 menorError = errorActual;
                 mejorMatch = std;
             }
         }
-
-        if (mejorMatch) {
-            return mejorMatch; // Devolvemos el objeto con nombre limpio y precio
-        }
-
-        // Si falló todo, devolvemos el original sucio
+        if (mejorMatch) return mejorMatch;
         return { nombre: texto, precio: 0 };
     }
 
@@ -341,7 +375,6 @@
             if (querySnapshot.empty) { alert("Sin datos."); btn.disabled = false; return; }
 
             const filasGeneral = []; const filasMisiones = [];
-            // Regex para buscar medidas explícitas en el nombre (Ej: "A1 30*42")
             const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
 
             querySnapshot.docs.forEach(doc => {
@@ -356,26 +389,17 @@
                 let medidaRaw = d.medida_detectada || "";
                 let estandarEncontrado = null;
 
-                // PASO 1: ¿El nombre tiene la medida escrita? (Prioridad Alta)
                 const matchNombre = nombreLimpio.match(regexExplicit);
                 if (matchNombre) {
-                    // Construimos un string tipo "30*42" y forzamos la búsqueda en estándares
                     let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
                     estandarEncontrado = obtenerEstandar(medidaTexto);
-                    // Limpiamos el nombre
                     nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
-                } 
-                // PASO 2: Si no, usamos la medida detectada por la máquina con la súper aproximación
-                else {
+                } else {
                     estandarEncontrado = obtenerEstandar(medidaRaw);
                 }
 
                 const filaBase = { 
-                    "Fecha": fecha, 
-                    "Hora": hora, 
-                    "Trabajo (Modelo)": nombreLimpio, 
-                    "Medida": estandarEncontrado.nombre, // Usamos siempre la medida limpia estandarizada 
-                    "Origen": d.archivo_original || "Manual" 
+                    "Fecha": fecha, "Hora": hora, "Trabajo (Modelo)": nombreLimpio, "Medida": estandarEncontrado.nombre, "Origen": d.archivo_original || "Manual" 
                 };
 
                 if (d.es_mision === true) {
