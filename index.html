@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro - Santa Cruz</title>
+    <title>Inventario Pro - Control Sucursales</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #005cbf; --bg: #f4f7f6; --text: #333; --accent: #ff9800; }
@@ -31,8 +31,13 @@
         .history-list { flex: 1; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
         .history-item { padding: 12px 20px; border-bottom: 1px solid #eee; position: relative; }
         .is-mision { border-left: 5px solid var(--accent); background: #fffbf0; } 
-        .tag-mision { background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 5px; }
         
+        /* ETIQUETAS */
+        .tag-mision { background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 5px; }
+        .tag-sucursal { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-right: 5px; }
+        .tag-sucursal.segundo { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+        .tag-sucursal.cuarto { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
         .h-row { display: flex; justify-content: space-between; align-items: start; }
         .h-model { font-weight: bold; color: #333; font-size: 0.95em; }
         .h-meta { font-size: 0.85em; color: #777; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
@@ -109,7 +114,7 @@
             </div>
 
             <div class="form-row">
-                 <select id="manual-size" style="flex: 2;">
+                 <select id="manual-size" style="flex: 1;">
                     <option value="">-- Tamaño --</option>
                     <option value="16*22">16*22</option>
                     <option value="20*27">20*27</option>
@@ -118,15 +123,20 @@
                     <option value="50*60">50*60</option>
                     <option value="OTRO">Otro</option>
                 </select>
+                <select id="manual-sucursal" style="flex: 1; border-color: #fab1a0; background: #fff5f5;">
+                    <option value="Segundo Anillo">🏠 2do Anillo</option>
+                    <option value="Cuarto Anillo">🏬 4to Anillo</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
                 <label class="check-container" style="flex: 1;">
                     <input type="checkbox" id="check-mision">
                     <span>Misión</span>
                 </label>
+                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800; flex: 2;">
             </div>
-            
-            <div class="form-row">
-                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800; width: 100%;">
-            </div>
+
             <button class="btn-reg" style="width: 100%;" onclick="registrarManual()">💾 Guardar y Descontar</button>
         </div>
 
@@ -150,7 +160,6 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    // IMPORTANTE: Agregamos 'increment' para la resta automática
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit, getDocs, increment } 
     from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
@@ -204,21 +213,19 @@
     window.descargarHistorialCompleto = descargarHistorialCompleto;
     window.descargarInventarioStock = descargarInventarioStock;
 
-    // --- CARGAR PRODUCTOS Y LLENAR EL SELECTOR MANUAL ---
+    // --- CARGAR PRODUCTOS ---
     const qProd = query(collection(db, "productos"), orderBy("name", "asc"));
     onSnapshot(qProd, (snapshot) => {
         const grid = document.getElementById('grid'); 
-        const selectModel = document.getElementById('manual-model'); // El nuevo selector
-        
+        const selectModel = document.getElementById('manual-model'); 
         grid.innerHTML = "";
         
-        // Guardamos la opción por defecto del select
+        // Mantener placeholder del select
+        const currentVal = selectModel.value;
         selectModel.innerHTML = '<option value="">-- Seleccionar Marco --</option>';
 
         snapshot.docs.forEach(d => {
             const data = d.data(); const id = d.id;
-            
-            // 1. Llenar Grid (Igual que siempre)
             const img = data.image || 'https://via.placeholder.com/150';
             const card = document.createElement('div'); card.className = 'card';
             card.innerHTML = `
@@ -237,14 +244,15 @@
                 </div>`;
             grid.appendChild(card);
 
-            // 2. Llenar el Selector del Registro Manual
             const option = document.createElement('option');
-            option.value = id; // El valor es el ID para poder restar stock
-            option.text = data.name; // El texto es el nombre del modelo
+            option.value = id; 
+            option.text = data.name;
             selectModel.appendChild(option);
         });
+        selectModel.value = currentVal; // Intentar mantener selección si existe
     });
 
+    // --- CARGAR HISTORIAL CON SUCURSAL ---
     const qHist = query(collection(db, "historial"), orderBy("fecha", "desc"), limit(30));
     onSnapshot(qHist, (snapshot) => {
         const list = document.getElementById('history-list'); list.innerHTML = "";
@@ -255,15 +263,23 @@
                 const dateObj = data.fecha.toDate();
                 fechaStr = dateObj.toLocaleDateString('es-BO') + " " + dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
             }
+            
+            // Lógica SUCURSAL
+            const origen = data.sucursal_origen || "Segundo Anillo"; // Default si no tiene el dato
+            const esCuarto = origen.toLowerCase().includes("cuarto");
+            const tagSucursal = esCuarto 
+                ? '<span class="tag-sucursal cuarto">4to Anillo</span>' 
+                : '<span class="tag-sucursal segundo">2do Anillo</span>';
+
             const esMision = data.es_mision === true;
             const claseCss = esMision ? 'history-item is-mision' : 'history-item';
-            const etiqueta = esMision ? '<span class="tag-mision">MISIÓN</span>' : '';
+            const etiquetaMis = esMision ? '<span class="tag-mision">MISIÓN</span>' : '';
             const fallecidoInfo = (esMision && data.nombre_fallecido) ? `<br><small style="color:#e65100">Fallecido: ${data.nombre_fallecido}</small>` : '';
 
             const li = document.createElement('li'); li.className = claseCss;
             li.innerHTML = `
                 <div class="h-row">
-                    <span class="h-model">${data.nombre_marco || 'Trabajo'} ${etiqueta}</span>
+                    <span class="h-model">${tagSucursal} ${data.nombre_marco || 'Trabajo'} ${etiquetaMis}</span>
                     <button class="btn-del-hist" onclick="borrarHistorial('${id}')">✕</button>
                 </div>
                 <div class="h-meta">
@@ -275,43 +291,37 @@
         });
     });
 
-    // --- NUEVO REGISTRO MANUAL CON RESTA DE STOCK ---
+    // --- REGISTRO MANUAL ACTUALIZADO ---
     async function registrarManual() {
         const selectModel = document.getElementById('manual-model');
-        const modelId = selectModel.value; // ID del producto
-        const modelName = selectModel.options[selectModel.selectedIndex].text; // Nombre (ej: A1)
+        const modelId = selectModel.value; 
+        const modelName = selectModel.options[selectModel.selectedIndex].text; 
 
-        const detalle = document.getElementById('manual-name').value; // Ej: Foto Boda
+        const detalle = document.getElementById('manual-name').value;
         const medida = document.getElementById('manual-size').value;
         const checkMision = document.getElementById('check-mision').checked;
         const fallecido = document.getElementById('manual-fallecido').value;
+        const sucursal = document.getElementById('manual-sucursal').value; // NUEVO DATO
 
-        // Validaciones
         if(!modelId) { alert("¡Debes seleccionar un Marco del inventario!"); return; }
         if(!medida) { alert("Selecciona el tamaño."); return; }
 
-        // Creamos un nombre compuesto para el historial: "Modelo - Detalle"
-        // Esto permite que el Excel siga funcionando para detectar el modelo
         const nombreCompuesto = detalle ? `${modelName} - ${detalle}` : modelName;
 
         try {
-            // 1. Guardar en Historial
             await addDoc(collection(db, "historial"), {
                 nombre_marco: nombreCompuesto, 
                 medida_detectada: medida, 
                 es_mision: checkMision, 
-                nombre_fallecido: checkMision ? fallecido : "", 
+                nombre_fallecido: checkMision ? fallecido : "",
+                sucursal_origen: sucursal, // GUARDAMOS LA SUCURSAL MANUAL
                 fecha: new Date(), 
                 archivo_original: "Registro Manual"
             });
 
-            // 2. RESTAR DEL STOCK AUTOMÁTICAMENTE
             const productRef = doc(db, "productos", modelId);
-            await updateDoc(productRef, {
-                quantity: increment(-1)
-            });
+            await updateDoc(productRef, { quantity: increment(-1) });
 
-            // Limpiar formulario
             selectModel.value = "";
             document.getElementById('manual-name').value = ""; 
             document.getElementById('manual-size').value = "";
@@ -319,10 +329,75 @@
             document.getElementById('check-mision').checked = false;
             document.getElementById('manual-fallecido').style.display = 'none';
 
-        } catch (e) {
-            console.error(e);
-            alert("Error al registrar: " + e.message);
-        }
+        } catch (e) { console.error(e); alert("Error al registrar: " + e.message); }
+    }
+
+    // --- EXCEL ACTUALIZADO CON COLUMNA SUCURSAL ---
+    async function descargarHistorialCompleto() {
+        const btn = document.getElementById('btn-descargar'); btn.disabled = true; btn.innerText = "⏳ Generando...";
+        try {
+            const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
+            const querySnapshot = await getDocs(qFull);
+            if (querySnapshot.empty) { alert("Sin datos."); btn.disabled = false; return; }
+
+            const filasGeneral = []; const filasMisiones = [];
+            const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
+
+            querySnapshot.docs.forEach(doc => {
+                const d = doc.data();
+                let fecha = "", hora = "";
+                if (d.fecha) {
+                    const objDate = d.fecha.toDate();
+                    fecha = objDate.toLocaleDateString('es-BO'); hora = objDate.toLocaleTimeString('es-BO');
+                }
+
+                let nombreLimpio = d.nombre_marco || "";
+                let medidaRaw = d.medida_detectada || "";
+                let estandarEncontrado = null;
+
+                const matchNombre = nombreLimpio.match(regexExplicit);
+                if (matchNombre) {
+                    let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
+                    estandarEncontrado = obtenerEstandar(medidaTexto);
+                    nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
+                } else {
+                    estandarEncontrado = obtenerEstandar(medidaRaw);
+                }
+
+                // NUEVA COLUMNA SUCURSAL
+                const sucursal = d.sucursal_origen || "Segundo Anillo";
+
+                const filaBase = { 
+                    "Fecha": fecha, 
+                    "Hora": hora, 
+                    "Sucursal": sucursal, // COLUMNA NUEVA
+                    "Trabajo (Modelo)": nombreLimpio, 
+                    "Medida": estandarEncontrado.nombre, 
+                    "Origen": d.archivo_original || "Manual" 
+                };
+
+                if (d.es_mision === true) {
+                    const filaMision = { ...filaBase, "Nombre Fallecido": d.nombre_fallecido || "", "Precio (Bs)": estandarEncontrado.precio };
+                    filasMisiones.push(filaMision);
+                } else {
+                    filasGeneral.push(filaBase);
+                }
+            });
+
+            const wb = XLSX.utils.book_new();
+            if (filasGeneral.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasGeneral), "Historial General");
+            else XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Vacío"}]), "Historial General");
+
+            if (filasMisiones.length > 0) {
+                const wsMis = XLSX.utils.json_to_sheet(filasMisiones);
+                const totalDinero = filasMisiones.reduce((sum, item) => sum + (item["Precio (Bs)"] || 0), 0);
+                XLSX.utils.sheet_add_aoa(wsMis, [["", "", "", "", "", "TOTAL ACUMULADO:", totalDinero]], {origin: -1});
+                XLSX.utils.book_append_sheet(wb, wsMis, "Reporte Misiones");
+            } else { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Sin Misiones"}]), "Reporte Misiones"); }
+
+            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } catch (error) { console.error(error); alert("Error excel: " + error.message); } 
+        finally { btn.disabled = false; btn.innerText = "📥 Descargar Historial Ventas"; }
     }
 
     async function descargarInventarioStock() {
@@ -365,65 +440,6 @@
         }
         if (mejorMatch) return mejorMatch;
         return { nombre: texto, precio: 0 };
-    }
-
-    async function descargarHistorialCompleto() {
-        const btn = document.getElementById('btn-descargar'); btn.disabled = true; btn.innerText = "⏳ Generando...";
-        try {
-            const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
-            const querySnapshot = await getDocs(qFull);
-            if (querySnapshot.empty) { alert("Sin datos."); btn.disabled = false; return; }
-
-            const filasGeneral = []; const filasMisiones = [];
-            const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
-
-            querySnapshot.docs.forEach(doc => {
-                const d = doc.data();
-                let fecha = "", hora = "";
-                if (d.fecha) {
-                    const objDate = d.fecha.toDate();
-                    fecha = objDate.toLocaleDateString('es-BO'); hora = objDate.toLocaleTimeString('es-BO');
-                }
-
-                let nombreLimpio = d.nombre_marco || "";
-                let medidaRaw = d.medida_detectada || "";
-                let estandarEncontrado = null;
-
-                const matchNombre = nombreLimpio.match(regexExplicit);
-                if (matchNombre) {
-                    let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
-                    estandarEncontrado = obtenerEstandar(medidaTexto);
-                    nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
-                } else {
-                    estandarEncontrado = obtenerEstandar(medidaRaw);
-                }
-
-                const filaBase = { 
-                    "Fecha": fecha, "Hora": hora, "Trabajo (Modelo)": nombreLimpio, "Medida": estandarEncontrado.nombre, "Origen": d.archivo_original || "Manual" 
-                };
-
-                if (d.es_mision === true) {
-                    const filaMision = { ...filaBase, "Nombre Fallecido": d.nombre_fallecido || "", "Precio (Bs)": estandarEncontrado.precio };
-                    filasMisiones.push(filaMision);
-                } else {
-                    filasGeneral.push(filaBase);
-                }
-            });
-
-            const wb = XLSX.utils.book_new();
-            if (filasGeneral.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasGeneral), "Historial General");
-            else XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Vacío"}]), "Historial General");
-
-            if (filasMisiones.length > 0) {
-                const wsMis = XLSX.utils.json_to_sheet(filasMisiones);
-                const totalDinero = filasMisiones.reduce((sum, item) => sum + (item["Precio (Bs)"] || 0), 0);
-                XLSX.utils.sheet_add_aoa(wsMis, [["", "", "", "", "TOTAL ACUMULADO:", totalDinero]], {origin: -1});
-                XLSX.utils.book_append_sheet(wb, wsMis, "Reporte Misiones");
-            } else { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Sin Misiones"}]), "Reporte Misiones"); }
-
-            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
-        } catch (error) { console.error(error); alert("Error excel: " + error.message); } 
-        finally { btn.disabled = false; btn.innerText = "📥 Descargar Historial Ventas"; }
     }
 
     function pedirClave() { return prompt("Clave Admin:") === ADMIN_PASSWORD; }
