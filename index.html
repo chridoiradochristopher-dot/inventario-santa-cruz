@@ -3,81 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro - V30</title>
+    <title>Inventario Pro - V32</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #005cbf; --bg: #f4f7f6; --text: #333; --accent: #ff9800; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        h1 { margin: 0; font-size: 1.5rem; }
+        :root { 
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+        
+        * { 
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+        
+        header { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+        
+        h1 { 
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
         .admin-toggle { 
-            cursor: pointer; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 0.9em; border: 1px solid transparent; transition: all 0.3s;
+            cursor: pointer;
+            background: rgba(255,255,255,0.15);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
         }
-        .admin-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+        .admin-toggle:hover { 
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-1px);
+        }
 
-        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .main-container { 
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
         
-        .inventory-section { flex: 6; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; background: #f9f9f9; }
-        .history-section { flex: 4; background: #fff; display: flex; flex-direction: column; border-left: 1px solid #eee; min-width: 380px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); }
+        .inventory-section { 
+            flex: 6;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--bg);
+        }
         
-        .history-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; }
+        .history-section { 
+            flex: 4;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border);
+            min-width: 400px;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.05);
+        }
         
-        .btn-excel { background: #217346; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; width: 100%; font-weight: bold; display: flex; justify-content: center; gap: 8px; margin-top: 5px;}
-        .btn-excel:hover { background: #1e6b41; }
-        .btn-blue { background: #005cbf; } .btn-blue:hover { background: #004494; }
+        .history-header { 
+            padding: 20px;
+            background: linear-gradient(to bottom, #fafafa, #ffffff);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .btn { 
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-excel { 
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            width: 100%;
+        }
+        .btn-excel:hover { 
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        }
+        .btn-excel:disabled { 
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-blue { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        .btn-blue:hover { 
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e3a8a 100%);
+        }
+        
+        .btn-add { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            width: 100%;
+            padding: 12px 24px;
+        }
+        .btn-add:hover { 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+        
+        .btn-reg { 
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            width: 100%;
+            padding: 12px;
+        }
+        .btn-reg:hover { 
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        }
 
-        .history-list { flex: 1; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
-        .history-item { padding: 12px 20px; border-bottom: 1px solid #eee; position: relative; }
-        .is-mision { border-left: 5px solid var(--accent); background: #fffbf0; } 
-        .tag-mision { background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-left: 5px; }
+        .history-list { 
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
         
-        /* ETIQUETAS SUCURSAL */
-        .tag-sucursal { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; margin-right: 5px; }
-        .tag-sucursal.segundo { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-        .tag-sucursal.cuarto { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .history-item { 
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            transition: all 0.2s;
+        }
+        .history-item:hover { 
+            background: #f8fafc;
+        }
+        
+        .is-mision { 
+            border-left: 4px solid var(--accent);
+            background: linear-gradient(to right, #fffbeb 0%, #ffffff 100%);
+        }
+        .is-mision:hover {
+            background: linear-gradient(to right, #fef3c7 0%, #fffbeb 100%);
+        }
+        
+        .tag-mision { 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7em;
+            font-weight: 700;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* ETIQUETAS SUCURSAL MEJORADAS */
+        .tag-sucursal { 
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7em;
+            font-weight: 700;
+            margin-right: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-sm);
+        }
+        .tag-sucursal.domicilio { 
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 1.5px solid #6ee7b7;
+        }
+        .tag-sucursal.segundo { 
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1.5px solid #93c5fd;
+        }
+        .tag-sucursal.cuarto { 
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border: 1.5px solid #fca5a5;
+        }
 
-        .h-row { display: flex; justify-content: space-between; align-items: start; }
-        .h-model { font-weight: bold; color: #333; font-size: 0.95em; }
-        .h-meta { font-size: 0.85em; color: #777; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
-        .h-time { color: var(--primary); font-weight: 600; }
-        .btn-del-hist { color: #dc3545; background: none; border: 1px solid #f8d7da; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .h-row { 
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 12px;
+        }
+        .h-model { 
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95em;
+            flex: 1;
+            line-height: 1.5;
+        }
+        .h-meta { 
+            font-size: 0.85em;
+            color: var(--text-light);
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .h-time { 
+            color: var(--primary);
+            font-weight: 600;
+        }
         
-        .panel-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .panel-title { font-weight: bold; margin-bottom: 10px; display: block; color: #555; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        input[type="text"], input[type="number"], input[type="file"], select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1; }
+        .btn-del-hist { 
+            color: var(--danger);
+            background: #fee2e2;
+            border: 1.5px solid #fecaca;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-del-hist:hover { 
+            background: var(--danger);
+            color: white;
+            transform: scale(1.1) rotate(90deg);
+        }
         
-        .check-container { display: flex; align-items: center; gap: 8px; font-size: 0.9em; cursor: pointer; background: #fff3e0; padding: 8px 12px; border-radius: 4px; border: 1px solid #ffe0b2; color: #e65100; font-weight: bold; }
-        .check-container input { width: 18px; height: 18px; cursor: pointer; }
+        .panel-box { 
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
         
-        .btn-add { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; }
-        .btn-reg { background: #6f42c1; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; }
+        .panel-title { 
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: block;
+            color: var(--text);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 100px; object-fit: cover; }
-        .card-body { padding: 10px; }
-        .c-title { font-weight: bold; font-size: 0.9em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .c-stock { display: flex; justify-content: center; align-items: center; margin-top: 5px; height: 30px; }
-        body.is-admin .c-stock { justify-content: space-between; }
-        .stock-num { font-size: 1.2em; font-weight: bold; color: var(--primary); }
-        .btn-icon { width: 25px; height: 25px; border-radius: 50%; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+        .form-row { 
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        
+        input[type="text"], 
+        input[type="number"], 
+        input[type="file"], 
+        select { 
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            flex: 1;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            background: var(--card-bg);
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        input::placeholder {
+            color: #94a3b8;
+        }
+        
+        .check-container { 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1.5px solid #fde68a;
+            color: #92400e;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .check-container:hover {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            transform: translateY(-1px);
+        }
+        .check-container input { 
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+        
+        .grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 20px;
+        }
+        
+        .card { 
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card img { 
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-body { 
+            padding: 12px;
+        }
+        
+        .c-title { 
+            font-weight: 600;
+            font-size: 0.9em;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .c-stock { 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 8px;
+            height: 32px;
+        }
+        body.is-admin .c-stock { 
+            justify-content: space-between;
+        }
+        
+        .stock-num { 
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .btn-icon { 
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .btn-icon:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
 
         .admin-only { display: none !important; }
         body.is-admin .admin-only { display: block !important; }
         body.is-admin .admin-only-flex { display: flex !important; }
         
         .history-secure-container { display: none; }
-        body.is-admin .history-secure-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        body.is-admin .history-secure-container { 
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 4px solid var(--primary);
+            padding: 14px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        
+        .info-box strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .divider {
+            margin: 20px 0;
+            border: 0;
+            border-top: 2px dashed var(--border);
+        }
+        
+        .admin-controls {
+            margin-top: 8px;
+            display: none;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .admin-controls button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .admin-controls button:first-child {
+            color: var(--primary);
+        }
+        .admin-controls button:first-child:hover {
+            background: #dbeafe;
+        }
+        
+        .admin-controls button:last-child {
+            color: var(--danger);
+        }
+        .admin-controls button:last-child:hover {
+            background: #fee2e2;
+        }
+        
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
     </style>
 </head>
 <body>
 
 <header>
-    <h1>📦 Taller Santa Cruz</h1>
+    <h1>
+        <span>📦</span>
+        <span>Taller Santa Cruz</span>
+    </h1>
     <div class="admin-toggle" onclick="toggleAdminPanel()">
         🔒 Administración
     </div>
@@ -85,94 +543,125 @@
 
 <div class="main-container">
     <div class="inventory-section">
-        <div id="admin-create-panel" class="panel-box admin-only" style="border: 2px solid #005cbf;">
-            <span class="panel-title">1. Gestión de Stock</span>
+        <div id="admin-create-panel" class="panel-box admin-only" style="border: 2px solid var(--primary);">
+            <span class="panel-title">🎨 Gestión de Stock</span>
             <div class="form-row">
                 <input type="text" id="name" placeholder="Nombre Modelo (Ej: A1)">
                 <input type="file" id="photo" accept="image/*">
             </div>
-            <button class="btn-add" onclick="addItem()">+ Crear Modelo</button>
-            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
-            <span class="panel-title" style="font-size: 0.8em; color: #217346;">Excel de Inventario (Faltantes)</span>
+            <button class="btn btn-add" onclick="addItem()">
+                <span>+</span>
+                <span>Crear Modelo</span>
+            </button>
+            
+            <hr class="divider">
+            
+            <span class="panel-title" style="color: #059669;">📊 Reporte de Inventario</span>
             <div class="form-row">
                 <input type="number" id="stock-ideal" placeholder="Stock Ideal (Ej: 20)" value="20">
-                <button class="btn-excel btn-blue" onclick="descargarInventarioStock()">📥 Bajar Reporte Stock</button>
+                <button class="btn btn-excel btn-blue" onclick="descargarInventarioStock()">
+                    <span>📥</span>
+                    <span>Descargar Stock</span>
+                </button>
             </div>
         </div>
+        
         <div id="grid" class="grid">Cargando...</div>
     </div>
 
     <div class="history-section">
-        <div class="admin-only" style="padding: 15px; border-bottom: 2px dashed #ddd; background: #fcfcfc;">
-            <span class="panel-title" style="color:#6f42c1">2. Registro Manual</span>
+        <div class="admin-only" style="padding: 20px; border-bottom: 2px solid var(--border); background: linear-gradient(to bottom, #fafafa, #ffffff);">
+            <span class="panel-title" style="color: #8b5cf6;">💼 Registro Manual</span>
+            
+            <!-- INFO BOX SOBRE ASIGNACIÓN AUTOMÁTICA -->
+            <div class="info-box">
+                <strong>ℹ️ Asignación Automática:</strong><br>
+                • <strong>Sin Misión</strong> → 🏡 Domicilio<br>
+                • <strong>Misión Normal</strong> → 🏠 2do Anillo<br>
+                • <strong>Misión "al 4to anillo"</strong> → 🏬 4to Anillo
+            </div>
             
             <div class="form-row">
-                <select id="manual-model" style="flex: 2; border-color: #005cbf; background: #f0f7ff; font-weight:bold;">
+                <select id="manual-model" style="flex: 2; border-color: var(--primary); background: #eff6ff; font-weight: 600;">
                     <option value="">-- Seleccionar Marco --</option>
-                    </select>
+                </select>
                 <input type="text" id="manual-name" placeholder="Detalle (Ej: Foto Boda)" style="flex: 2;">
             </div>
 
             <div class="form-row">
-                 <select id="manual-size" style="flex: 1;">
+                <select id="manual-size" style="flex: 1;">
                     <option value="">-- Tamaño --</option>
-                    <option value="16*22">16*22</option>
-                    <option value="20*27">20*27</option>
-                    <option value="30*42">30*42</option>
-                    <option value="50*40">50*40</option>
-                    <option value="50*60">50*60</option>
+                    <option value="16*22">16×22</option>
+                    <option value="20*27">20×27</option>
+                    <option value="30*42">30×42</option>
+                    <option value="50*40">50×40</option>
+                    <option value="50*60">50×60</option>
                     <option value="OTRO">Otro</option>
-                </select>
-                <select id="manual-sucursal" style="flex: 1; border-color: #fab1a0; background: #fff5f5;">
-                    <option value="Segundo Anillo">🏠 2do Anillo</option>
-                    <option value="Cuarto Anillo">🏬 4to Anillo</option>
                 </select>
             </div>
             
             <div class="form-row">
                 <label class="check-container" style="flex: 1;">
                     <input type="checkbox" id="check-mision">
-                    <span>Misión</span>
+                    <span>✨ Misión</span>
                 </label>
-                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: #ff9800; flex: 2;">
+                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: var(--accent); flex: 2;">
             </div>
-            <button class="btn-reg" style="width: 100%;" onclick="registrarManual()">💾 Guardar y Descontar</button>
+            
+            <button class="btn btn-reg" onclick="registrarManual()">
+                <span>💾</span>
+                <span>Guardar y Descontar</span>
+            </button>
         </div>
 
         <div class="history-secure-container">
             <div class="history-header">
-                <span style="font-weight:bold; color:#555">📊 Historial de Trabajo</span>
-                <button id="btn-descargar" class="btn-excel" onclick="descargarHistorialCompleto()">
-                    📥 Descargar Historial Ventas
+                <span style="font-weight: 700; color: var(--text); font-size: 1.05em;">📊 Historial de Trabajo</span>
+                <button id="btn-descargar" class="btn btn-excel" onclick="descargarHistorialCompleto()">
+                    <span>📥</span>
+                    <span>Descargar Historial Ventas</span>
                 </button>
             </div>
             <ul id="history-list" class="history-list"></ul>
         </div>
         
-        <div id="secure-placeholder" style="padding: 40px; text-align: center; color: #bbb; margin-top: 20px;">
-            <span style="font-size: 3em;">🔒</span><br>
-            <h3>Modo Catálogo</h3>
-            <small>Acceso restringido solo a personal autorizado</small>
+        <div id="secure-placeholder" style="padding: 60px 40px; text-align: center; color: #94a3b8; margin-top: 40px;">
+            <div style="font-size: 4em; margin-bottom: 16px; opacity: 0.3;">🔒</div>
+            <h3 style="font-size: 1.3em; font-weight: 600; color: var(--text); margin-bottom: 8px;">Modo Catálogo</h3>
+            <small style="font-size: 0.9em;">Acceso restringido solo a personal autorizado</small>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit, getDocs, increment } 
-    from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        updateDoc, 
+        deleteDoc, 
+        doc, 
+        onSnapshot, 
+        query, 
+        orderBy, 
+        limit, 
+        getDocs, 
+        increment 
+    } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+    // ==================== CONFIGURACIÓN ====================
     const firebaseConfig = {
-      apiKey: "AIzaSyAg30zZfrssGZN7LdhN0XAvShG-5J-LdSI",
-      authDomain: "inventario-441b2.firebaseapp.com",
-      projectId: "inventario-441b2",
-      storageBucket: "inventario-441b2.firebasestorage.app",
-      messagingSenderId: "52459952582",
-      appId: "1:52459952582:web:77a0329f956d5e96fdfac7",
-      measurementId: "G-J9S40TYDT7"
+        apiKey: "AIzaSyAg30zZfrssGZN7LdhN0XAvShG-5J-LdSI",
+        authDomain: "inventario-441b2.firebaseapp.com",
+        projectId: "inventario-441b2",
+        storageBucket: "inventario-441b2.firebasestorage.app",
+        messagingSenderId: "52459952582",
+        appId: "1:52459952582:web:77a0329f956d5e96fdfac7",
+        measurementId: "G-J9S40TYDT7"
     };
 
-    const ADMIN_PASSWORD = "1234"; 
+    const ADMIN_PASSWORD = "1234";
     
     const ESTANDARES = [
         { nombre: "16*22", w: 16, h: 22, precio: 150 },
@@ -185,24 +674,478 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    document.getElementById('check-mision').addEventListener('change', function() {
-        document.getElementById('manual-fallecido').style.display = this.checked ? 'block' : 'none';
-    });
+    // ==================== UTILIDADES ====================
+    
+    /**
+     * Determina la sucursal según la nueva lógica
+     * @param {boolean} esMision - Si el trabajo es una misión
+     * @param {string} nombreCompleto - Nombre completo del trabajo
+     * @returns {string} - Sucursal asignada
+     */
+    function determinarSucursal(esMision, nombreCompleto) {
+        const nombreLower = (nombreCompleto || "").toLowerCase();
+        
+        if (!esMision) {
+            // No es misión → Domicilio
+            return "Domicilio";
+        }
+        
+        // Es misión, verificar si menciona 4to anillo
+        const es4toAnillo = nombreLower.includes("4to anillo") || 
+                           nombreLower.includes("cuarto anillo") ||
+                           nombreLower.includes("4to. anillo") ||
+                           nombreLower.includes("4to anillo");
+        
+        return es4toAnillo ? "Cuarto Anillo" : "Segundo Anillo";
+    }
 
+    /**
+     * Obtiene la clase CSS y texto para la etiqueta de sucursal
+     * @param {string} sucursal - Nombre de la sucursal
+     * @returns {object} - Objeto con clase CSS y texto a mostrar
+     */
+    function obtenerDatosSucursal(sucursal) {
+        const sucursalLower = (sucursal || "").toLowerCase();
+        
+        if (sucursalLower.includes("domicilio")) {
+            return { clase: "domicilio", texto: "🏡 Domicilio" };
+        } else if (sucursalLower.includes("cuarto")) {
+            return { clase: "cuarto", texto: "🏬 4to Anillo" };
+        } else {
+            return { clase: "segundo", texto: "🏠 2do Anillo" };
+        }
+    }
+
+    /**
+     * Busca el estándar de medida más cercano
+     * @param {string} texto - Texto con la medida
+     * @returns {object} - Objeto con nombre y precio del estándar
+     */
+    function obtenerEstandar(texto) {
+        if (!texto) return { nombre: "DESCONOCIDO", precio: 0 };
+        
+        const numeros = texto.match(/(\d+[.,]?\d*)/g);
+        if (!numeros || numeros.length < 2) return { nombre: texto, precio: 0 };
+        
+        let v1 = parseFloat(numeros[0].replace(',', '.'));
+        let v2 = parseFloat(numeros[1].replace(',', '.'));
+        
+        // Ajustar si los valores están en milímetros
+        if (v1 > 100) v1 = v1 / 10;
+        if (v2 > 100) v2 = v2 / 10;
+        
+        let mejorMatch = null;
+        let menorError = 9999;
+        const TOLERANCIA = 4.0;
+        
+        for (let std of ESTANDARES) {
+            const error1 = Math.abs(v1 - std.w) + Math.abs(v2 - std.h);
+            const error2 = Math.abs(v1 - std.h) + Math.abs(v2 - std.w);
+            const errorActual = Math.min(error1, error2);
+            
+            if (errorActual < TOLERANCIA && errorActual < menorError) {
+                menorError = errorActual;
+                mejorMatch = std;
+            }
+        }
+        
+        return mejorMatch || { nombre: texto, precio: 0 };
+    }
+
+    /**
+     * Redimensiona una imagen para optimizar almacenamiento
+     * @param {File} file - Archivo de imagen
+     * @returns {Promise<string>} - Imagen en Base64
+     */
+    function resizeImage(file) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxWidth = 200;
+                    canvas.width = maxWidth;
+                    canvas.height = (maxWidth / img.width) * img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /**
+     * Formatea fecha para mostrar
+     * @param {Date} fecha - Objeto fecha
+     * @returns {string} - Fecha formateada
+     */
+    function formatearFecha(fecha) {
+        if (!fecha) return "---";
+        const dateObj = fecha.toDate ? fecha.toDate() : fecha;
+        const fechaStr = dateObj.toLocaleDateString('es-BO');
+        const horaStr = dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
+        return `${fechaStr} ${horaStr}`;
+    }
+
+    // ==================== FUNCIONES PRINCIPALES ====================
+
+    /**
+     * Valida la clave de administrador
+     * @returns {boolean} - true si la clave es correcta
+     */
+    function pedirClave() {
+        return prompt("Clave Admin:") === ADMIN_PASSWORD;
+    }
+
+    /**
+     * Alterna el modo administrador
+     */
     window.toggleAdminPanel = function() {
         const body = document.body;
         const placeholder = document.getElementById('secure-placeholder');
+        
         if (body.classList.contains('is-admin')) {
             body.classList.remove('is-admin');
-            placeholder.style.display = 'block'; 
+            placeholder.style.display = 'block';
         } else {
             if (pedirClave()) {
                 body.classList.add('is-admin');
-                placeholder.style.display = 'none'; 
+                placeholder.style.display = 'none';
             }
         }
     }
 
+    /**
+     * Agrega un nuevo producto al inventario
+     */
+    async function addItem() {
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            alert("Por favor ingresa un nombre para el modelo");
+            return;
+        }
+        
+        const file = document.getElementById('photo').files[0];
+        let base64 = null;
+        
+        if (file) {
+            base64 = await resizeImage(file);
+        }
+        
+        try {
+            await addDoc(collection(db, "productos"), {
+                name: name,
+                quantity: 0,
+                image: base64,
+                date: Date.now()
+            });
+            
+            document.getElementById('name').value = "";
+            document.getElementById('photo').value = "";
+        } catch (error) {
+            console.error("Error al agregar producto:", error);
+            alert("Error al agregar el producto");
+        }
+    }
+
+    /**
+     * Registra un trabajo manualmente con la NUEVA LÓGICA de sucursales
+     */
+    async function registrarManual() {
+        const selectModel = document.getElementById('manual-model');
+        const modelId = selectModel.value;
+        const modelName = selectModel.options[selectModel.selectedIndex].text;
+        
+        const detalle = document.getElementById('manual-name').value.trim();
+        const medida = document.getElementById('manual-size').value;
+        const checkMision = document.getElementById('check-mision').checked;
+        const fallecido = document.getElementById('manual-fallecido').value.trim();
+
+        // Validaciones
+        if (!modelId) {
+            alert("¡Debes seleccionar un Marco del inventario!");
+            return;
+        }
+        if (!medida) {
+            alert("Selecciona el tamaño.");
+            return;
+        }
+        if (checkMision && !fallecido) {
+            alert("Para misiones, debes ingresar el nombre del fallecido.");
+            return;
+        }
+
+        const nombreCompuesto = detalle ? `${modelName} - ${detalle}` : modelName;
+        
+        // ========== NUEVA LÓGICA DE SUCURSAL ==========
+        const sucursalAsignada = determinarSucursal(checkMision, nombreCompuesto);
+        
+        console.log("Registrando trabajo:", {
+            nombre: nombreCompuesto,
+            esMision: checkMision,
+            sucursal: sucursalAsignada
+        });
+        
+        try {
+            // Registrar en historial
+            await addDoc(collection(db, "historial"), {
+                nombre_marco: nombreCompuesto,
+                medida_detectada: medida,
+                es_mision: checkMision,
+                nombre_fallecido: checkMision ? fallecido : "",
+                sucursal_origen: sucursalAsignada, // Sucursal asignada automáticamente
+                fecha: new Date(),
+                archivo_original: "Registro Manual"
+            });
+
+            // Descontar del inventario
+            const productRef = doc(db, "productos", modelId);
+            await updateDoc(productRef, {
+                quantity: increment(-1)
+            });
+
+            // Limpiar formulario
+            selectModel.value = "";
+            document.getElementById('manual-name').value = "";
+            document.getElementById('manual-size').value = "";
+            document.getElementById('manual-fallecido').value = "";
+            document.getElementById('check-mision').checked = false;
+            document.getElementById('manual-fallecido').style.display = 'none';
+
+        } catch (error) {
+            console.error("Error al registrar:", error);
+            alert("Error al registrar: " + error.message);
+        }
+    }
+
+    /**
+     * Cambia la cantidad de un producto
+     */
+    async function cambiarCant(id, cantidadActual, cambio) {
+        try {
+            const nuevaCantidad = cantidadActual + cambio;
+            if (nuevaCantidad < 0) {
+                alert("La cantidad no puede ser negativa");
+                return;
+            }
+            await updateDoc(doc(db, "productos", id), {
+                quantity: nuevaCantidad
+            });
+        } catch (error) {
+            console.error("Error al cambiar cantidad:", error);
+            alert("Error al actualizar la cantidad");
+        }
+    }
+
+    /**
+     * Permite fijar manualmente la cantidad de un producto
+     */
+    async function fijarCant(id) {
+        if (confirm("¿Editar Stock?")) {
+            const valor = prompt("Ingrese la cantidad total:");
+            if (valor !== null && valor !== "") {
+                const cantidad = parseInt(valor);
+                if (!isNaN(cantidad) && cantidad >= 0) {
+                    try {
+                        await updateDoc(doc(db, "productos", id), {
+                            quantity: cantidad
+                        });
+                    } catch (error) {
+                        console.error("Error al fijar cantidad:", error);
+                        alert("Error al actualizar el stock");
+                    }
+                } else {
+                    alert("Por favor ingrese un número válido");
+                }
+            }
+        }
+    }
+
+    /**
+     * Borra un producto del inventario
+     */
+    async function borrarItem(id) {
+        if (confirm("¿Borrar permanentemente este producto del inventario?")) {
+            try {
+                await deleteDoc(doc(db, "productos", id));
+            } catch (error) {
+                console.error("Error al borrar producto:", error);
+                alert("Error al borrar el producto");
+            }
+        }
+    }
+
+    /**
+     * Borra un registro del historial
+     */
+    async function borrarHistorial(id) {
+        if (confirm("¿Borrar este registro del historial?")) {
+            try {
+                await deleteDoc(doc(db, "historial", id));
+            } catch (error) {
+                console.error("Error al borrar historial:", error);
+                alert("Error al borrar el registro");
+            }
+        }
+    }
+
+    /**
+     * Descarga el historial completo en Excel con hojas separadas
+     */
+    async function descargarHistorialCompleto() {
+        const btn = document.getElementById('btn-descargar');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span><span>Generando...</span>';
+        
+        try {
+            const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
+            const querySnapshot = await getDocs(qFull);
+            
+            if (querySnapshot.empty) {
+                alert("No hay datos en el historial.");
+                btn.disabled = false;
+                btn.innerHTML = '<span>📥</span><span>Descargar Historial Ventas</span>';
+                return;
+            }
+
+            const filasGeneral = [];
+            const filasMisiones = [];
+            const regexExplicit = /(\d+)\s*[\*x×]\s*(\d+)/i;
+
+            querySnapshot.docs.forEach(doc => {
+                const d = doc.data();
+                const fecha = formatearFecha(d.fecha);
+
+                let nombreLimpio = d.nombre_marco || "";
+                let medidaRaw = d.medida_detectada || "";
+                let estandarEncontrado = null;
+
+                // Intentar extraer medida del nombre
+                const matchNombre = nombreLimpio.match(regexExplicit);
+                if (matchNombre) {
+                    const medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
+                    estandarEncontrado = obtenerEstandar(medidaTexto);
+                    nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
+                } else {
+                    estandarEncontrado = obtenerEstandar(medidaRaw);
+                }
+
+                // AQUÍ ESTÁ EL CAMBIO CRÍTICO: recalcular sucursal para registros antiguos
+                let sucursal = d.sucursal_origen;
+                
+                // Si no tiene sucursal o es antigua (todos eran 2do anillo), recalcular
+                if (!sucursal || sucursal === "Segundo Anillo") {
+                    sucursal = determinarSucursal(d.es_mision === true, nombreLimpio);
+                }
+                
+                const datosSucursal = obtenerDatosSucursal(sucursal);
+
+                const filaBase = {
+                    "Fecha y Hora": fecha,
+                    "Sucursal": datosSucursal.texto,
+                    "Trabajo (Modelo)": nombreLimpio,
+                    "Medida": estandarEncontrado.nombre,
+                    "Origen": d.archivo_original || "Manual"
+                };
+
+                if (d.es_mision === true) {
+                    const filaMision = {
+                        ...filaBase,
+                        "Nombre Fallecido": d.nombre_fallecido || "",
+                        "Precio (Bs)": estandarEncontrado.precio
+                    };
+                    filasMisiones.push(filaMision);
+                } else {
+                    filasGeneral.push(filaBase);
+                }
+            });
+
+            // Crear libro de Excel
+            const wb = XLSX.utils.book_new();
+            
+            // Hoja de Historial General
+            if (filasGeneral.length > 0) {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasGeneral), "Historial General");
+            } else {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info: "Sin trabajos generales"}]), "Historial General");
+            }
+
+            // Hoja de Misiones con total
+            if (filasMisiones.length > 0) {
+                const wsMis = XLSX.utils.json_to_sheet(filasMisiones);
+                const totalDinero = filasMisiones.reduce((sum, item) => sum + (item["Precio (Bs)"] || 0), 0);
+                XLSX.utils.sheet_add_aoa(wsMis, [["", "", "", "", "", "TOTAL ACUMULADO:", totalDinero]], {origin: -1});
+                XLSX.utils.book_append_sheet(wb, wsMis, "Reporte Misiones");
+            } else {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info: "Sin misiones registradas"}]), "Reporte Misiones");
+            }
+
+            // Descargar archivo
+            const fechaArchivo = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Reporte_Ventas_${fechaArchivo}.xlsx`);
+            
+        } catch (error) {
+            console.error("Error al generar Excel:", error);
+            alert("Error al generar el archivo Excel: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>📥</span><span>Descargar Historial Ventas</span>';
+        }
+    }
+
+    /**
+     * Descarga reporte de inventario con stock faltante
+     */
+    async function descargarInventarioStock() {
+        const stockIdeal = parseInt(document.getElementById('stock-ideal').value) || 20;
+        
+        try {
+            const qAll = query(collection(db, "productos"), orderBy("name", "asc"));
+            const snapshot = await getDocs(qAll);
+            
+            if (snapshot.empty) {
+                alert("No hay productos en el inventario");
+                return;
+            }
+            
+            const filas = [];
+            snapshot.docs.forEach(d => {
+                const data = d.data();
+                const cantidad = data.quantity || 0;
+                const falta = stockIdeal - cantidad;
+                const faltaTexto = falta > 0 ? falta : "✓ Completo";
+                
+                filas.push({
+                    "Modelo": data.name,
+                    "Stock Actual": cantidad,
+                    "Stock Ideal": stockIdeal,
+                    "Faltante para Completar": faltaTexto
+                });
+            });
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Inventario Stock");
+            
+            const fechaArchivo = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Stock_Faltantes_${fechaArchivo}.xlsx`);
+            
+        } catch (error) {
+            console.error("Error al generar reporte de stock:", error);
+            alert("Error al generar el reporte");
+        }
+    }
+
+    // ==================== EVENT LISTENERS ====================
+
+    // Mostrar/ocultar campo de fallecido según checkbox
+    document.getElementById('check-mision').addEventListener('change', function() {
+        document.getElementById('manual-fallecido').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // ==================== EXPORTAR FUNCIONES ====================
+    
     window.addItem = addItem;
     window.registrarManual = registrarManual;
     window.cambiarCant = cambiarCant;
@@ -212,244 +1155,102 @@
     window.descargarHistorialCompleto = descargarHistorialCompleto;
     window.descargarInventarioStock = descargarInventarioStock;
 
+    // ==================== SUSCRIPCIONES EN TIEMPO REAL ====================
+
+    // Cargar productos
     const qProd = query(collection(db, "productos"), orderBy("name", "asc"));
     onSnapshot(qProd, (snapshot) => {
-        const grid = document.getElementById('grid'); 
-        const selectModel = document.getElementById('manual-model'); 
+        const grid = document.getElementById('grid');
+        const selectModel = document.getElementById('manual-model');
+        
         grid.innerHTML = "";
         
         const currentVal = selectModel.value;
         selectModel.innerHTML = '<option value="">-- Seleccionar Marco --</option>';
 
         snapshot.docs.forEach(d => {
-            const data = d.data(); const id = d.id;
+            const data = d.data();
+            const id = d.id;
             const img = data.image || 'https://via.placeholder.com/150';
-            const card = document.createElement('div'); card.className = 'card';
+            
+            // Crear tarjeta de producto
+            const card = document.createElement('div');
+            card.className = 'card';
             card.innerHTML = `
-                <img src="${img}">
+                <img src="${img}" alt="${data.name}">
                 <div class="card-body">
                     <span class="c-title" title="${data.name}">${data.name}</span>
                     <div class="c-stock">
-                        <button class="btn-icon admin-only" onclick="cambiarCant('${id}', ${data.quantity}, -1)">-</button>
+                        <button class="btn-icon admin-only" onclick="cambiarCant('${id}', ${data.quantity}, -1)">−</button>
                         <span class="stock-num">${data.quantity}</span>
                         <button class="btn-icon admin-only" onclick="cambiarCant('${id}', ${data.quantity}, 1)">+</button>
                     </div>
-                    <div class="admin-controls admin-only-flex" style="margin-top:5px; justify-content:space-between; display:none;">
-                         <button style="border:none; background:none; cursor:pointer; font-size:0.8em; color:#007bff" onclick="fijarCant('${id}')">Editar</button>
-                         <button style="border:none; background:none; cursor:pointer; font-size:0.8em; color:red" onclick="borrarItem('${id}')">Borrar</button>
+                    <div class="admin-controls admin-only-flex">
+                        <button onclick="fijarCant('${id}')">✏️ Editar</button>
+                        <button onclick="borrarItem('${id}')">🗑️ Borrar</button>
                     </div>
-                </div>`;
+                </div>
+            `;
             grid.appendChild(card);
 
+            // Agregar opción al selector
             const option = document.createElement('option');
-            option.value = id; 
+            option.value = id;
             option.text = data.name;
             selectModel.appendChild(option);
         });
+        
         selectModel.value = currentVal;
     });
 
+    // Cargar historial
     const qHist = query(collection(db, "historial"), orderBy("fecha", "desc"), limit(30));
     onSnapshot(qHist, (snapshot) => {
-        const list = document.getElementById('history-list'); list.innerHTML = "";
+        const list = document.getElementById('history-list');
+        list.innerHTML = "";
+        
         snapshot.docs.forEach(d => {
-            const data = d.data(); const id = d.id;
-            let fechaStr = "---";
-            if(data.fecha) {
-                const dateObj = data.fecha.toDate();
-                fechaStr = dateObj.toLocaleDateString('es-BO') + " " + dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
+            const data = d.data();
+            const id = d.id;
+            
+            const fechaStr = formatearFecha(data.fecha);
+            
+            // AQUÍ ESTÁ EL OTRO CAMBIO CRÍTICO: recalcular sucursal para registros antiguos
+            let sucursal = data.sucursal_origen;
+            
+            // Si no tiene sucursal guardada, o todos los registros antiguos tenían "Segundo Anillo"
+            // recalculamos basándonos en si es misión o no
+            if (!sucursal) {
+                sucursal = determinarSucursal(data.es_mision === true, data.nombre_marco || "");
             }
             
-            // --- MOSTRAR SUCURSAL EN LISTA ---
-            const origen = data.sucursal_origen || "Segundo Anillo"; 
-            const esCuarto = origen.toLowerCase().includes("cuarto");
-            const tagSucursal = esCuarto 
-                ? '<span class="tag-sucursal cuarto">4to Anillo</span>' 
-                : '<span class="tag-sucursal segundo">2do Anillo</span>';
+            const datosSucursal = obtenerDatosSucursal(sucursal);
+            const tagSucursal = `<span class="tag-sucursal ${datosSucursal.clase}">${datosSucursal.texto}</span>`;
 
             const esMision = data.es_mision === true;
             const claseCss = esMision ? 'history-item is-mision' : 'history-item';
             const etiquetaMis = esMision ? '<span class="tag-mision">MISIÓN</span>' : '';
-            const fallecidoInfo = (esMision && data.nombre_fallecido) ? `<br><small style="color:#e65100">Fallecido: ${data.nombre_fallecido}</small>` : '';
+            const fallecidoInfo = (esMision && data.nombre_fallecido) 
+                ? `<br><small style="color: var(--accent); font-weight: 500;">👤 ${data.nombre_fallecido}</small>` 
+                : '';
 
-            const li = document.createElement('li'); li.className = claseCss;
+            const li = document.createElement('li');
+            li.className = claseCss;
             li.innerHTML = `
                 <div class="h-row">
                     <span class="h-model">${tagSucursal} ${data.nombre_marco || 'Trabajo'} ${etiquetaMis}</span>
                     <button class="btn-del-hist" onclick="borrarHistorial('${id}')">✕</button>
                 </div>
                 <div class="h-meta">
-                    <span class="h-time">${fechaStr}</span>
-                    <span>Medida: ${data.medida_detectada || '-'}</span>
+                    <span class="h-time">🕐 ${fechaStr}</span>
+                    <span>📏 Medida: ${data.medida_detectada || '-'}</span>
                     ${fallecidoInfo}
-                </div>`;
+                </div>
+            `;
             list.appendChild(li);
         });
     });
 
-    async function registrarManual() {
-        const selectModel = document.getElementById('manual-model');
-        const modelId = selectModel.value; 
-        const modelName = selectModel.options[selectModel.selectedIndex].text; 
-
-        const detalle = document.getElementById('manual-name').value;
-        const medida = document.getElementById('manual-size').value;
-        const checkMision = document.getElementById('check-mision').checked;
-        const fallecido = document.getElementById('manual-fallecido').value;
-        const sucursal = document.getElementById('manual-sucursal').value;
-
-        if(!modelId) { alert("¡Debes seleccionar un Marco del inventario!"); return; }
-        if(!medida) { alert("Selecciona el tamaño."); return; }
-
-        const nombreCompuesto = detalle ? `${modelName} - ${detalle}` : modelName;
-
-        try {
-            await addDoc(collection(db, "historial"), {
-                nombre_marco: nombreCompuesto, 
-                medida_detectada: medida, 
-                es_mision: checkMision, 
-                nombre_fallecido: checkMision ? fallecido : "",
-                sucursal_origen: sucursal, 
-                fecha: new Date(), 
-                archivo_original: "Registro Manual"
-            });
-
-            const productRef = doc(db, "productos", modelId);
-            await updateDoc(productRef, { quantity: increment(-1) });
-
-            selectModel.value = "";
-            document.getElementById('manual-name').value = ""; 
-            document.getElementById('manual-size').value = "";
-            document.getElementById('manual-fallecido').value = ""; 
-            document.getElementById('check-mision').checked = false;
-            document.getElementById('manual-fallecido').style.display = 'none';
-
-        } catch (e) { console.error(e); alert("Error al registrar: " + e.message); }
-    }
-
-    async function descargarHistorialCompleto() {
-        const btn = document.getElementById('btn-descargar'); btn.disabled = true; btn.innerText = "⏳ Generando...";
-        try {
-            const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
-            const querySnapshot = await getDocs(qFull);
-            if (querySnapshot.empty) { alert("Sin datos."); btn.disabled = false; return; }
-
-            const filasGeneral = []; const filasMisiones = [];
-            const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
-
-            querySnapshot.docs.forEach(doc => {
-                const d = doc.data();
-                let fecha = "", hora = "";
-                if (d.fecha) {
-                    const objDate = d.fecha.toDate();
-                    fecha = objDate.toLocaleDateString('es-BO'); hora = objDate.toLocaleTimeString('es-BO');
-                }
-
-                let nombreLimpio = d.nombre_marco || "";
-                let medidaRaw = d.medida_detectada || "";
-                let estandarEncontrado = null;
-
-                const matchNombre = nombreLimpio.match(regexExplicit);
-                if (matchNombre) {
-                    let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
-                    estandarEncontrado = obtenerEstandar(medidaTexto);
-                    nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
-                } else {
-                    estandarEncontrado = obtenerEstandar(medidaRaw);
-                }
-
-                // --- COLUMNA SUCURSAL AGREGADA ---
-                const sucursal = d.sucursal_origen || "Segundo Anillo";
-
-                const filaBase = { 
-                    "Fecha": fecha, 
-                    "Hora": hora, 
-                    "Sucursal": sucursal,
-                    "Trabajo (Modelo)": nombreLimpio, 
-                    "Medida": estandarEncontrado.nombre, 
-                    "Origen": d.archivo_original || "Manual" 
-                };
-
-                if (d.es_mision === true) {
-                    const filaMision = { ...filaBase, "Nombre Fallecido": d.nombre_fallecido || "", "Precio (Bs)": estandarEncontrado.precio };
-                    filasMisiones.push(filaMision);
-                } else {
-                    filasGeneral.push(filaBase);
-                }
-            });
-
-            const wb = XLSX.utils.book_new();
-            if (filasGeneral.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasGeneral), "Historial General");
-            else XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Vacío"}]), "Historial General");
-
-            if (filasMisiones.length > 0) {
-                const wsMis = XLSX.utils.json_to_sheet(filasMisiones);
-                const totalDinero = filasMisiones.reduce((sum, item) => sum + (item["Precio (Bs)"] || 0), 0);
-                XLSX.utils.sheet_add_aoa(wsMis, [["", "", "", "", "", "TOTAL ACUMULADO:", totalDinero]], {origin: -1});
-                XLSX.utils.book_append_sheet(wb, wsMis, "Reporte Misiones");
-            } else { XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{Info:"Sin Misiones"}]), "Reporte Misiones"); }
-
-            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
-        } catch (error) { console.error(error); alert("Error excel: " + error.message); } 
-        finally { btn.disabled = false; btn.innerText = "📥 Descargar Historial Ventas"; }
-    }
-
-    async function descargarInventarioStock() {
-        const stockIdeal = parseInt(document.getElementById('stock-ideal').value) || 20;
-        const qAll = query(collection(db, "productos"), orderBy("name", "asc"));
-        const snapshot = await getDocs(qAll);
-        if(snapshot.empty) { alert("No hay productos"); return; }
-        const filas = [];
-        snapshot.docs.forEach(d => {
-            const data = d.data();
-            const cantidad = data.quantity || 0;
-            const falta = stockIdeal - cantidad; 
-            const faltaTexto = falta > 0 ? falta : "✓ Completo";
-            filas.push({ "Modelo": data.name, "Stock Actual": cantidad, "Stock Ideal": stockIdeal, "Faltante para Completar": faltaTexto });
-        });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Inventario Stock");
-        XLSX.writeFile(wb, `Stock_Faltantes_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
-    function obtenerEstandar(texto) {
-        if (!texto) return { nombre: "DESCONOCIDO", precio: 0 };
-        let numeros = texto.match(/(\d+[.,]?\d*)/g);
-        if (!numeros || numeros.length < 2) return { nombre: texto, precio: 0 };
-        let v1 = parseFloat(numeros[0].replace(',', '.'));
-        let v2 = parseFloat(numeros[1].replace(',', '.'));
-        if (v1 > 100) v1 = v1 / 10;
-        if (v2 > 100) v2 = v2 / 10;
-        let mejorMatch = null;
-        let menorError = 9999; 
-        const TOLERANCIA = 4.0; 
-        for (let std of ESTANDARES) {
-            let error1 = Math.abs(v1 - std.w) + Math.abs(v2 - std.h);
-            let error2 = Math.abs(v1 - std.h) + Math.abs(v2 - std.w);
-            let errorActual = Math.min(error1, error2);
-            if (errorActual < TOLERANCIA && errorActual < menorError) {
-                menorError = errorActual;
-                mejorMatch = std;
-            }
-        }
-        if (mejorMatch) return mejorMatch;
-        return { nombre: texto, precio: 0 };
-    }
-
-    function pedirClave() { return prompt("Clave Admin:") === ADMIN_PASSWORD; }
-    
-    async function addItem() {
-        const name = document.getElementById('name').value; if(!name) return;
-        const file = document.getElementById('photo').files[0]; let base64 = null;
-        if(file) base64 = await resizeImage(file);
-        await addDoc(collection(db, "productos"), { name: name, quantity: 0, image: base64, date: Date.now() });
-        document.getElementById('name').value = ""; document.getElementById('photo').value = "";
-    }
-    async function cambiarCant(id, c, ch) { await updateDoc(doc(db, "productos", id), { quantity: c + ch }); }
-    async function fijarCant(id) { if(confirm("¿Editar Stock?")) { const v = prompt("Total:"); if(v) await updateDoc(doc(db, "productos", id), { quantity: parseInt(v) }); } }
-    async function borrarItem(id) { if(confirm("¿Borrar permanentemente?")) await deleteDoc(doc(db, "productos", id)); }
-    async function borrarHistorial(id) { if(confirm("¿Borrar del historial?")) await deleteDoc(doc(db, "historial", id)); }
-    function resizeImage(file) { return new Promise(r => { const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const c = document.createElement('canvas'); c.width = 200; c.height = (200/img.width)*img.height; c.getContext('2d').drawImage(img,0,0,c.width,c.height); r(c.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; reader.readAsDataURL(file); }); }
 </script>
 </body>
 </html>
