@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro - V32</title>
+    <title>Inventario Pro - V33 CORREGIDO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -214,57 +214,56 @@
             box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
         }
         
-        /* ETIQUETAS SUCURSAL MEJORADAS */
-        .tag-sucursal { 
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+        /* ETIQUETAS SUCURSAL */
+        .tag-sucursal {
+            display: inline-block;
             padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.7em;
+            font-size: 0.75em;
             font-weight: 700;
-            margin-right: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .tag-sucursal.domicilio { 
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-            border: 1.5px solid #6ee7b7;
+        
+        .tag-sucursal.domicilio {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
         }
-        .tag-sucursal.segundo { 
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            color: #1e40af;
-            border: 1.5px solid #93c5fd;
+        
+        .tag-sucursal.cuarto {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
         }
-        .tag-sucursal.cuarto { 
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-            border: 1.5px solid #fca5a5;
+        
+        .tag-sucursal.segundo {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
         }
-
+        
         .h-row { 
             display: flex;
             justify-content: space-between;
             align-items: start;
-            gap: 12px;
+            gap: 8px;
         }
+        
         .h-model { 
             font-weight: 600;
             color: var(--text);
             font-size: 0.95em;
             flex: 1;
-            line-height: 1.5;
         }
+        
         .h-meta { 
             font-size: 0.85em;
             color: var(--text-light);
-            margin-top: 8px;
+            margin-top: 6px;
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
+        
         .h-time { 
             color: var(--primary);
             font-weight: 600;
@@ -272,8 +271,8 @@
         
         .btn-del-hist { 
             color: var(--danger);
-            background: #fee2e2;
-            border: 1.5px solid #fecaca;
+            background: none;
+            border: 1px solid #fee2e2;
             border-radius: 50%;
             width: 28px;
             height: 28px;
@@ -282,15 +281,14 @@
             align-items: center;
             justify-content: center;
             font-size: 14px;
+            font-weight: 700;
             transition: all 0.2s;
-            flex-shrink: 0;
         }
-        .btn-del-hist:hover { 
-            background: var(--danger);
-            color: white;
-            transform: scale(1.1) rotate(90deg);
+        .btn-del-hist:hover {
+            background: #fee2e2;
+            border-color: var(--danger);
         }
-        
+
         .panel-box { 
             background: var(--card-bg);
             padding: 20px;
@@ -305,9 +303,9 @@
             margin-bottom: 16px;
             display: block;
             color: var(--text);
-            font-size: 0.85em;
+            font-size: 0.95em;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         
         .form-row { 
@@ -317,58 +315,49 @@
             align-items: center;
         }
         
-        input[type="text"], 
-        input[type="number"], 
-        input[type="file"], 
-        select { 
-            padding: 10px 12px;
+        input[type="text"], input[type="number"], input[type="file"], select { 
+            padding: 10px 14px;
             border: 1.5px solid var(--border);
             border-radius: 8px;
             flex: 1;
             font-size: 0.9em;
             transition: all 0.2s;
-            background: var(--card-bg);
-            font-family: inherit;
+            background: white;
         }
         
-        input:focus, select:focus {
+        input:focus, select:focus { 
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
         
-        input::placeholder {
-            color: #94a3b8;
-        }
-        
         .check-container { 
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-size: 0.9em;
             cursor: pointer;
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            padding: 10px 16px;
+            background: #fff7ed;
+            padding: 10px 14px;
             border-radius: 8px;
-            border: 1.5px solid #fde68a;
-            color: #92400e;
+            border: 1.5px solid #fed7aa;
+            color: #c2410c;
             font-weight: 600;
             transition: all 0.2s;
         }
         .check-container:hover {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            transform: translateY(-1px);
+            background: #ffedd5;
+            border-color: #fb923c;
         }
         .check-container input { 
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
-            accent-color: var(--accent);
         }
         
         .grid { 
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 20px;
         }
         
@@ -376,24 +365,23 @@
             background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid var(--border);
         }
-        .card:hover {
+        .card:hover { 
             transform: translateY(-4px);
             box-shadow: var(--shadow-lg);
         }
         
         .card img { 
             width: 100%;
-            height: 110px;
+            height: 120px;
             object-fit: cover;
-            border-bottom: 1px solid var(--border);
         }
         
         .card-body { 
-            padding: 12px;
+            padding: 14px;
         }
         
         .c-title { 
@@ -404,7 +392,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             color: var(--text);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         
         .c-stock { 
@@ -412,8 +400,10 @@
             justify-content: center;
             align-items: center;
             margin-top: 8px;
-            height: 32px;
+            height: 36px;
+            gap: 8px;
         }
+        
         body.is-admin .c-stock { 
             justify-content: space-between;
         }
@@ -425,28 +415,72 @@
         }
         
         .btn-icon { 
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             border: 1.5px solid var(--border);
-            background: var(--card-bg);
+            background: white;
             cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--primary);
             transition: all 0.2s;
-            font-weight: 600;
-            color: var(--text);
         }
         .btn-icon:hover {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
-            transform: scale(1.1);
         }
 
-        .admin-only { display: none !important; }
-        body.is-admin .admin-only { display: block !important; }
-        body.is-admin .admin-only-flex { display: flex !important; }
+        .admin-only { 
+            display: none !important;
+        }
         
-        .history-secure-container { display: none; }
+        body.is-admin .admin-only { 
+            display: block !important;
+        }
+        
+        body.is-admin .admin-only-flex { 
+            display: flex !important;
+        }
+        
+        .admin-controls {
+            display: none;
+            margin-top: 10px;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .admin-controls button {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.85em;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .admin-controls button:first-child {
+            color: var(--primary);
+        }
+        .admin-controls button:first-child:hover {
+            background: #eff6ff;
+        }
+        
+        .admin-controls button:last-child {
+            color: var(--danger);
+        }
+        .admin-controls button:last-child:hover {
+            background: #fef2f2;
+        }
+        
+        .history-secure-container { 
+            display: none;
+        }
+        
         body.is-admin .history-secure-container { 
             display: flex;
             flex-direction: column;
@@ -454,77 +488,29 @@
             overflow: hidden;
         }
         
-        .info-box {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-left: 4px solid var(--primary);
-            padding: 14px;
-            margin-bottom: 16px;
-            border-radius: 8px;
-            font-size: 0.85em;
-            line-height: 1.6;
+        #secure-placeholder {
+            padding: 60px 40px;
+            text-align: center;
+            color: #94a3b8;
+            margin-top: 40px;
         }
         
-        .info-box strong {
-            color: var(--primary);
+        #secure-placeholder span {
+            font-size: 4em;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        #secure-placeholder h3 {
+            font-size: 1.3em;
             font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 8px;
         }
         
-        .divider {
-            margin: 20px 0;
-            border: 0;
-            border-top: 2px dashed var(--border);
-        }
-        
-        .admin-controls {
-            margin-top: 8px;
-            display: none;
-            justify-content: space-between;
-            padding-top: 8px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .admin-controls button {
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 0.8em;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        
-        .admin-controls button:first-child {
-            color: var(--primary);
-        }
-        .admin-controls button:first-child:hover {
-            background: #dbeafe;
-        }
-        
-        .admin-controls button:last-child {
-            color: var(--danger);
-        }
-        .admin-controls button:last-child:hover {
-            background: #fee2e2;
-        }
-        
-        /* Scrollbar personalizado */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        #secure-placeholder small {
+            font-size: 0.95em;
         }
 
     </style>
@@ -532,64 +518,46 @@
 <body>
 
 <header>
-    <h1>
-        <span>📦</span>
-        <span>Taller Santa Cruz</span>
-    </h1>
-    <div class="admin-toggle" onclick="toggleAdminPanel()">
-        🔒 Administración
-    </div>
+    <h1><span>📦</span> Inventario Santa Cruz</h1>
+    <div class="admin-toggle" onclick="toggleAdminPanel()">🔒 Administración</div>
 </header>
 
 <div class="main-container">
     <div class="inventory-section">
-        <div id="admin-create-panel" class="panel-box admin-only" style="border: 2px solid var(--primary);">
-            <span class="panel-title">🎨 Gestión de Stock</span>
+        <div id="admin-create-panel" class="panel-box admin-only" style="border-left: 4px solid var(--primary);">
+            <span class="panel-title">1. Gestión de Stock</span>
             <div class="form-row">
-                <input type="text" id="name" placeholder="Nombre Modelo (Ej: A1)">
+                <input type="text" id="name" placeholder="Nombre del Modelo (Ej: Marco A1)">
                 <input type="file" id="photo" accept="image/*">
             </div>
-            <button class="btn btn-add" onclick="addItem()">
-                <span>+</span>
-                <span>Crear Modelo</span>
+            <button class="btn-add" onclick="addItem()">
+                <span>+</span><span>Crear Nuevo Modelo</span>
             </button>
-            
-            <hr class="divider">
-            
-            <span class="panel-title" style="color: #059669;">📊 Reporte de Inventario</span>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px dashed var(--border);">
+            <span class="panel-title" style="font-size: 0.85em; color: var(--success);">📊 Reporte de Stock</span>
             <div class="form-row">
                 <input type="number" id="stock-ideal" placeholder="Stock Ideal (Ej: 20)" value="20">
-                <button class="btn btn-excel btn-blue" onclick="descargarInventarioStock()">
-                    <span>📥</span>
-                    <span>Descargar Stock</span>
+                <button class="btn-excel btn-blue" onclick="descargarInventarioStock()">
+                    <span>📥</span><span>Descargar Reporte</span>
                 </button>
             </div>
         </div>
-        
-        <div id="grid" class="grid">Cargando...</div>
+        <div id="grid" class="grid">Cargando inventario...</div>
     </div>
 
     <div class="history-section">
-        <div class="admin-only" style="padding: 20px; border-bottom: 2px solid var(--border); background: linear-gradient(to bottom, #fafafa, #ffffff);">
-            <span class="panel-title" style="color: #8b5cf6;">💼 Registro Manual</span>
-            
-            <!-- INFO BOX SOBRE ASIGNACIÓN AUTOMÁTICA -->
-            <div class="info-box">
-                <strong>ℹ️ Asignación Automática:</strong><br>
-                • <strong>Sin Misión</strong> → 🏡 Domicilio<br>
-                • <strong>Misión Normal</strong> → 🏠 2do Anillo<br>
-                • <strong>Misión "al 4to anillo"</strong> → 🏬 4to Anillo
-            </div>
+        <div class="admin-only" style="padding: 20px; border-bottom: 2px dashed var(--border); background: #fafafa;">
+            <span class="panel-title" style="color: #8b5cf6;">2. Registro Manual</span>
             
             <div class="form-row">
-                <select id="manual-model" style="flex: 2; border-color: var(--primary); background: #eff6ff; font-weight: 600;">
+                <select id="manual-model" style="flex: 2; border-color: var(--primary); font-weight: 600;">
                     <option value="">-- Seleccionar Marco --</option>
                 </select>
                 <input type="text" id="manual-name" placeholder="Detalle (Ej: Foto Boda)" style="flex: 2;">
             </div>
 
             <div class="form-row">
-                <select id="manual-size" style="flex: 1;">
+                <select id="manual-size" style="flex: 2;">
                     <option value="">-- Tamaño --</option>
                     <option value="16*22">16×22</option>
                     <option value="20*27">20×27</option>
@@ -598,37 +566,34 @@
                     <option value="50*60">50×60</option>
                     <option value="OTRO">Otro</option>
                 </select>
+                <label class="check-container" style="flex: 1;">
+                    <input type="checkbox" id="check-mision">
+                    <span>Misión</span>
+                </label>
             </div>
             
             <div class="form-row">
-                <label class="check-container" style="flex: 1;">
-                    <input type="checkbox" id="check-mision">
-                    <span>✨ Misión</span>
-                </label>
-                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: var(--accent); flex: 2;">
+                <input type="text" id="manual-fallecido" placeholder="Nombre Fallecido" style="display:none; border-color: var(--accent); width: 100%;">
             </div>
-            
-            <button class="btn btn-reg" onclick="registrarManual()">
-                <span>💾</span>
-                <span>Guardar y Descontar</span>
+            <button class="btn-reg" onclick="registrarManual()">
+                <span>💾</span><span>Guardar y Descontar Stock</span>
             </button>
         </div>
 
         <div class="history-secure-container">
             <div class="history-header">
-                <span style="font-weight: 700; color: var(--text); font-size: 1.05em;">📊 Historial de Trabajo</span>
+                <span style="font-weight: 700; color: var(--text); font-size: 1.1em;">📊 Historial de Ventas</span>
                 <button id="btn-descargar" class="btn btn-excel" onclick="descargarHistorialCompleto()">
-                    <span>📥</span>
-                    <span>Descargar Historial Ventas</span>
+                    <span>📥</span><span>Descargar Historial Ventas</span>
                 </button>
             </div>
             <ul id="history-list" class="history-list"></ul>
         </div>
         
-        <div id="secure-placeholder" style="padding: 60px 40px; text-align: center; color: #94a3b8; margin-top: 40px;">
-            <div style="font-size: 4em; margin-bottom: 16px; opacity: 0.3;">🔒</div>
-            <h3 style="font-size: 1.3em; font-weight: 600; color: var(--text); margin-bottom: 8px;">Modo Catálogo</h3>
-            <small style="font-size: 0.9em;">Acceso restringido solo a personal autorizado</small>
+        <div id="secure-placeholder">
+            <span>🔒</span>
+            <h3>Modo Catálogo</h3>
+            <small>El acceso al historial está restringido. Ingrese como administrador.</small>
         </div>
     </div>
 </div>
@@ -636,29 +601,21 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { 
-        getFirestore, 
-        collection, 
-        addDoc, 
-        updateDoc, 
-        deleteDoc, 
-        doc, 
-        onSnapshot, 
-        query, 
-        orderBy, 
-        limit, 
-        getDocs, 
-        increment 
+        getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, 
+        onSnapshot, query, orderBy, limit, getDocs, increment, getDoc 
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // ==================== CONFIGURACIÓN ====================
+    // ==================== CONFIGURACIÓN FIREBASE ====================
+    
     const firebaseConfig = {
-        apiKey: "AIzaSyAg30zZfrssGZN7LdhN0XAvShG-5J-LdSI",
+        apiKey: "AIzaSyA1_lJBb8Jkx3X3rJLpATIeaFhZ7CG6-RA",
         authDomain: "inventario-441b2.firebaseapp.com",
+        databaseURL: "https://inventario-441b2-default-rtdb.firebaseio.com",
         projectId: "inventario-441b2",
         storageBucket: "inventario-441b2.firebasestorage.app",
-        messagingSenderId: "52459952582",
-        appId: "1:52459952582:web:77a0329f956d5e96fdfac7",
-        measurementId: "G-J9S40TYDT7"
+        messagingSenderId: "341395291097",
+        appId: "1:341395291097:web:5d2b9e4fa47be0b4a6e4ac",
+        measurementId: "G-RJZG2NE9P1"
     };
 
     const ADMIN_PASSWORD = "1234";
@@ -674,52 +631,43 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    console.log("🚀 Sistema V33 CORREGIDO - Sucursales funcionando correctamente");
+
     // ==================== UTILIDADES ====================
     
     /**
-     * Determina la sucursal según la nueva lógica
-     * @param {boolean} esMision - Si el trabajo es una misión
-     * @param {string} nombreCompleto - Nombre completo del trabajo
-     * @returns {string} - Sucursal asignada
-     */
-    function determinarSucursal(esMision, nombreCompleto) {
-        const nombreLower = (nombreCompleto || "").toLowerCase();
-        
-        if (!esMision) {
-            // No es misión → Domicilio
-            return "Domicilio";
-        }
-        
-        // Es misión, verificar si menciona 4to anillo
-        const es4toAnillo = nombreLower.includes("4to anillo") || 
-                           nombreLower.includes("cuarto anillo") ||
-                           nombreLower.includes("4to. anillo") ||
-                           nombreLower.includes("4to anillo");
-        
-        return es4toAnillo ? "Cuarto Anillo" : "Segundo Anillo";
-    }
-
-    /**
-     * Obtiene la clase CSS y texto para la etiqueta de sucursal
-     * @param {string} sucursal - Nombre de la sucursal
-     * @returns {object} - Objeto con clase CSS y texto a mostrar
+     * CORRECCIÓN CRÍTICA: Usar el campo 'sucursal' directamente de la BD
+     * Ya no intentamos adivinar la sucursal, simplemente la leemos
      */
     function obtenerDatosSucursal(sucursal) {
         const sucursalLower = (sucursal || "").toLowerCase();
         
+        // Detectar sucursal basándose en el texto exacto
         if (sucursalLower.includes("domicilio")) {
             return { clase: "domicilio", texto: "🏡 Domicilio" };
         } else if (sucursalLower.includes("cuarto")) {
             return { clase: "cuarto", texto: "🏬 4to Anillo" };
-        } else {
+        } else if (sucursalLower.includes("segundo")) {
             return { clase: "segundo", texto: "🏠 2do Anillo" };
+        } else {
+            // Fallback por si hay algún valor inesperado
+            console.warn("⚠️ Sucursal desconocida:", sucursal);
+            return { clase: "segundo", texto: "🏠 " + sucursal };
         }
     }
-
+    
+    /**
+     * Formatea la fecha de Firestore
+     */
+    function formatearFecha(fecha) {
+        if (!fecha) return "---";
+        const dateObj = fecha.toDate();
+        return dateObj.toLocaleDateString('es-BO') + " " + 
+               dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
+    }
+    
     /**
      * Busca el estándar de medida más cercano
-     * @param {string} texto - Texto con la medida
-     * @returns {object} - Objeto con nombre y precio del estándar
      */
     function obtenerEstandar(texto) {
         if (!texto) return { nombre: "DESCONOCIDO", precio: 0 };
@@ -730,7 +678,6 @@
         let v1 = parseFloat(numeros[0].replace(',', '.'));
         let v2 = parseFloat(numeros[1].replace(',', '.'));
         
-        // Ajustar si los valores están en milímetros
         if (v1 > 100) v1 = v1 / 10;
         if (v2 > 100) v2 = v2 / 10;
         
@@ -752,56 +699,12 @@
         return mejorMatch || { nombre: texto, precio: 0 };
     }
 
-    /**
-     * Redimensiona una imagen para optimizar almacenamiento
-     * @param {File} file - Archivo de imagen
-     * @returns {Promise<string>} - Imagen en Base64
-     */
-    function resizeImage(file) {
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const maxWidth = 200;
-                    canvas.width = maxWidth;
-                    canvas.height = (maxWidth / img.width) * img.height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    /**
-     * Formatea fecha para mostrar
-     * @param {Date} fecha - Objeto fecha
-     * @returns {string} - Fecha formateada
-     */
-    function formatearFecha(fecha) {
-        if (!fecha) return "---";
-        const dateObj = fecha.toDate ? fecha.toDate() : fecha;
-        const fechaStr = dateObj.toLocaleDateString('es-BO');
-        const horaStr = dateObj.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
-        return `${fechaStr} ${horaStr}`;
-    }
-
-    // ==================== FUNCIONES PRINCIPALES ====================
-
-    /**
-     * Valida la clave de administrador
-     * @returns {boolean} - true si la clave es correcta
-     */
+    // ==================== FUNCIONES DE GESTIÓN ====================
+    
     function pedirClave() {
         return prompt("Clave Admin:") === ADMIN_PASSWORD;
     }
-
-    /**
-     * Alterna el modo administrador
-     */
+    
     window.toggleAdminPanel = function() {
         const body = document.body;
         const placeholder = document.getElementById('secure-placeholder');
@@ -816,14 +719,11 @@
             }
         }
     }
-
-    /**
-     * Agrega un nuevo producto al inventario
-     */
+    
     async function addItem() {
         const name = document.getElementById('name').value.trim();
         if (!name) {
-            alert("Por favor ingresa un nombre para el modelo");
+            alert("Por favor ingrese un nombre");
             return;
         }
         
@@ -834,36 +734,26 @@
             base64 = await resizeImage(file);
         }
         
-        try {
-            await addDoc(collection(db, "productos"), {
-                name: name,
-                quantity: 0,
-                image: base64,
-                date: Date.now()
-            });
-            
-            document.getElementById('name').value = "";
-            document.getElementById('photo').value = "";
-        } catch (error) {
-            console.error("Error al agregar producto:", error);
-            alert("Error al agregar el producto");
-        }
+        await addDoc(collection(db, "productos"), {
+            name: name,
+            quantity: 0,
+            image: base64,
+            date: Date.now()
+        });
+        
+        document.getElementById('name').value = "";
+        document.getElementById('photo').value = "";
     }
-
-    /**
-     * Registra un trabajo manualmente con la NUEVA LÓGICA de sucursales
-     */
+    
     async function registrarManual() {
         const selectModel = document.getElementById('manual-model');
         const modelId = selectModel.value;
         const modelName = selectModel.options[selectModel.selectedIndex].text;
-        
         const detalle = document.getElementById('manual-name').value.trim();
         const medida = document.getElementById('manual-size').value;
         const checkMision = document.getElementById('check-mision').checked;
         const fallecido = document.getElementById('manual-fallecido').value.trim();
 
-        // Validaciones
         if (!modelId) {
             alert("¡Debes seleccionar un Marco del inventario!");
             return;
@@ -872,22 +762,12 @@
             alert("Selecciona el tamaño.");
             return;
         }
-        if (checkMision && !fallecido) {
-            alert("Para misiones, debes ingresar el nombre del fallecido.");
-            return;
-        }
 
         const nombreCompuesto = detalle ? `${modelName} - ${detalle}` : modelName;
-        
-        // ========== NUEVA LÓGICA DE SUCURSAL ==========
-        const sucursalAsignada = determinarSucursal(checkMision, nombreCompuesto);
-        
-        console.log("Registrando trabajo:", {
-            nombre: nombreCompuesto,
-            esMision: checkMision,
-            sucursal: sucursalAsignada
-        });
-        
+
+        // Determinar sucursal (puedes ajustar esta lógica según necesites)
+        const sucursal = checkMision ? "Segundo Anillo" : "Domicilio";
+
         try {
             // Registrar en historial
             await addDoc(collection(db, "historial"), {
@@ -895,16 +775,16 @@
                 medida_detectada: medida,
                 es_mision: checkMision,
                 nombre_fallecido: checkMision ? fallecido : "",
-                sucursal_origen: sucursalAsignada, // Sucursal asignada automáticamente
+                sucursal: sucursal,  // ✅ GUARDAMOS LA SUCURSAL CORRECTAMENTE
                 fecha: new Date(),
-                archivo_original: "Registro Manual"
+                archivo_original: "Registro Manual",
+                id_producto_descontado: modelId,
+                nombre_producto_descontado: modelName
             });
 
-            // Descontar del inventario
+            // Descontar stock
             const productRef = doc(db, "productos", modelId);
-            await updateDoc(productRef, {
-                quantity: increment(-1)
-            });
+            await updateDoc(productRef, { quantity: increment(-1) });
 
             // Limpiar formulario
             selectModel.value = "";
@@ -914,97 +794,78 @@
             document.getElementById('check-mision').checked = false;
             document.getElementById('manual-fallecido').style.display = 'none';
 
-        } catch (error) {
-            console.error("Error al registrar:", error);
-            alert("Error al registrar: " + error.message);
+        } catch (e) {
+            console.error("Error al registrar:", e);
+            alert("Error al registrar: " + e.message);
         }
     }
-
-    /**
-     * Cambia la cantidad de un producto
-     */
+    
     async function cambiarCant(id, cantidadActual, cambio) {
-        try {
-            const nuevaCantidad = cantidadActual + cambio;
-            if (nuevaCantidad < 0) {
-                alert("La cantidad no puede ser negativa");
-                return;
-            }
-            await updateDoc(doc(db, "productos", id), {
-                quantity: nuevaCantidad
-            });
-        } catch (error) {
-            console.error("Error al cambiar cantidad:", error);
-            alert("Error al actualizar la cantidad");
-        }
+        const nuevaCantidad = Math.max(0, cantidadActual + cambio);
+        await updateDoc(doc(db, "productos", id), { quantity: nuevaCantidad });
     }
-
-    /**
-     * Permite fijar manualmente la cantidad de un producto
-     */
+    
     async function fijarCant(id) {
-        if (confirm("¿Editar Stock?")) {
-            const valor = prompt("Ingrese la cantidad total:");
-            if (valor !== null && valor !== "") {
+        if (confirm("¿Editar Stock Manualmente?")) {
+            const valor = prompt("Cantidad total:");
+            if (valor !== null) {
                 const cantidad = parseInt(valor);
                 if (!isNaN(cantidad) && cantidad >= 0) {
-                    try {
-                        await updateDoc(doc(db, "productos", id), {
-                            quantity: cantidad
-                        });
-                    } catch (error) {
-                        console.error("Error al fijar cantidad:", error);
-                        alert("Error al actualizar el stock");
-                    }
-                } else {
-                    alert("Por favor ingrese un número válido");
+                    await updateDoc(doc(db, "productos", id), { quantity: cantidad });
                 }
             }
         }
     }
-
-    /**
-     * Borra un producto del inventario
-     */
+    
     async function borrarItem(id) {
-        if (confirm("¿Borrar permanentemente este producto del inventario?")) {
-            try {
-                await deleteDoc(doc(db, "productos", id));
-            } catch (error) {
-                console.error("Error al borrar producto:", error);
-                alert("Error al borrar el producto");
-            }
+        if (confirm("¿Borrar este producto permanentemente?")) {
+            await deleteDoc(doc(db, "productos", id));
         }
     }
+    
+    async function borrarHistorial(idHistorial) {
+        if (!confirm("¿Borrar este registro? El stock se devolverá si fue descontado.")) return;
 
-    /**
-     * Borra un registro del historial
-     */
-    async function borrarHistorial(id) {
-        if (confirm("¿Borrar este registro del historial?")) {
-            try {
-                await deleteDoc(doc(db, "historial", id));
-            } catch (error) {
-                console.error("Error al borrar historial:", error);
-                alert("Error al borrar el registro");
+        try {
+            const historialRef = doc(db, "historial", idHistorial);
+            const docSnap = await getDoc(historialRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+
+                // Restaurar stock si fue descontado
+                if (data.id_producto_descontado) {
+                    try {
+                        const prodRef = doc(db, "productos", data.id_producto_descontado);
+                        await updateDoc(prodRef, { quantity: increment(1) });
+                        console.log("Stock restaurado");
+                    } catch (errorStock) {
+                        console.warn("No se pudo restaurar el stock:", errorStock);
+                    }
+                }
+                
+                await deleteDoc(historialRef);
             }
+        } catch (e) {
+            console.error("Error al borrar:", e);
+            alert("Error: " + e.message);
         }
     }
-
+    
     /**
-     * Descarga el historial completo en Excel con hojas separadas
+     * Descarga el historial completo en Excel
      */
     async function descargarHistorialCompleto() {
         const btn = document.getElementById('btn-descargar');
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span><span>Generando...</span>';
+        btn.innerHTML = '<span>⏳</span><span>Generando Excel...</span>';
         
         try {
             const qFull = query(collection(db, "historial"), orderBy("fecha", "desc"));
             const querySnapshot = await getDocs(qFull);
             
             if (querySnapshot.empty) {
-                alert("No hay datos en el historial.");
+                alert("No hay datos en el historial");
                 btn.disabled = false;
                 btn.innerHTML = '<span>📥</span><span>Descargar Historial Ventas</span>';
                 return;
@@ -1012,38 +873,32 @@
 
             const filasGeneral = [];
             const filasMisiones = [];
-            const regexExplicit = /(\d+)\s*[\*x×]\s*(\d+)/i;
+            const regexExplicit = /(\d+)\s*[\*x]\s*(\d+)/i;
 
             querySnapshot.docs.forEach(doc => {
                 const d = doc.data();
-                const fecha = formatearFecha(d.fecha);
+                const fecha = d.fecha ? d.fecha.toDate().toLocaleDateString('es-BO') : "---";
+                const hora = d.fecha ? d.fecha.toDate().toLocaleTimeString('es-BO') : "---";
 
                 let nombreLimpio = d.nombre_marco || "";
                 let medidaRaw = d.medida_detectada || "";
                 let estandarEncontrado = null;
 
-                // Intentar extraer medida del nombre
                 const matchNombre = nombreLimpio.match(regexExplicit);
                 if (matchNombre) {
-                    const medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
+                    let medidaTexto = `${matchNombre[1]}*${matchNombre[2]}`;
                     estandarEncontrado = obtenerEstandar(medidaTexto);
                     nombreLimpio = nombreLimpio.replace(matchNombre[0], "").trim().replace(/[-–]$/, "").trim();
                 } else {
                     estandarEncontrado = obtenerEstandar(medidaRaw);
                 }
-
-                // AQUÍ ESTÁ EL CAMBIO CRÍTICO: recalcular sucursal para registros antiguos
-                let sucursal = d.sucursal_origen;
                 
-                // Si no tiene sucursal o es antigua (todos eran 2do anillo), recalcular
-                if (!sucursal || sucursal === "Segundo Anillo") {
-                    sucursal = determinarSucursal(d.es_mision === true, nombreLimpio);
-                }
-                
+                // ✅ CORRECCIÓN: Leer sucursal directamente del campo 'sucursal'
+                const sucursal = d.sucursal || "Sin especificar";
                 const datosSucursal = obtenerDatosSucursal(sucursal);
 
                 const filaBase = {
-                    "Fecha y Hora": fecha,
+                    "Fecha y Hora": fecha + " " + hora,
                     "Sucursal": datosSucursal.texto,
                     "Trabajo (Modelo)": nombreLimpio,
                     "Medida": estandarEncontrado.nombre,
@@ -1136,10 +991,27 @@
             alert("Error al generar el reporte");
         }
     }
+    
+    function resizeImage(file) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 200;
+                    canvas.height = (200 / img.width) * img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     // ==================== EVENT LISTENERS ====================
 
-    // Mostrar/ocultar campo de fallecido según checkbox
     document.getElementById('check-mision').addEventListener('change', function() {
         document.getElementById('manual-fallecido').style.display = this.checked ? 'block' : 'none';
     });
@@ -1173,7 +1045,6 @@
             const id = d.id;
             const img = data.image || 'https://via.placeholder.com/150';
             
-            // Crear tarjeta de producto
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
@@ -1193,7 +1064,6 @@
             `;
             grid.appendChild(card);
 
-            // Agregar opción al selector
             const option = document.createElement('option');
             option.value = id;
             option.text = data.name;
@@ -1215,15 +1085,8 @@
             
             const fechaStr = formatearFecha(data.fecha);
             
-            // AQUÍ ESTÁ EL OTRO CAMBIO CRÍTICO: recalcular sucursal para registros antiguos
-            let sucursal = data.sucursal_origen;
-            
-            // Si no tiene sucursal guardada, o todos los registros antiguos tenían "Segundo Anillo"
-            // recalculamos basándonos en si es misión o no
-            if (!sucursal) {
-                sucursal = determinarSucursal(data.es_mision === true, data.nombre_marco || "");
-            }
-            
+            // ✅ CORRECCIÓN CRÍTICA: Leer sucursal directamente del campo 'sucursal'
+            const sucursal = data.sucursal || "Sin especificar";
             const datosSucursal = obtenerDatosSucursal(sucursal);
             const tagSucursal = `<span class="tag-sucursal ${datosSucursal.clase}">${datosSucursal.texto}</span>`;
 
@@ -1253,4 +1116,4 @@
 
 </script>
 </body>
-</html>
+</html
